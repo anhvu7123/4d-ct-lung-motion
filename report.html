@@ -4,26 +4,27 @@
     <meta charset="UTF-8">
     <title>4D-CT Lung Radiotherapy Simulation Report - Vu Minh Anh</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #2d3748; background: #f7fafc; padding: 30px; margin: 0; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        h1 { color: #1a365d; border-bottom: 2px solid #3182ce; padding-bottom: 12px; font-size: 26px; }
-        h2 { color: #2b6cb0; margin-top: 35px; border-left: 4px solid #3182ce; padding-left: 10px; }
-        .badge { background: #ebf8ff; color: #2b6cb0; font-weight: bold; padding: 4px 10px; border-radius: 6px; font-size: 14px; display: inline-block; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 15px; }
-        th, td { padding: 12px; text-align: center; border: 1px solid #e2e8f0; }
-        th { background: #edf2f7; color: #4a5568; }
-        .pass { color: #38a169; font-weight: bold; }
-        .fail { color: #e53e3e; font-weight: bold; }
-        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; background: #f8fafc; padding: 25px; margin: 0; }
+        .container { max-width: 1050px; margin: 0 auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); }
+        h1 { color: #0f172a; border-bottom: 2px solid #2563eb; padding-bottom: 10px; font-size: 24px; }
+        h2 { color: #1e3a8a; margin-top: 30px; border-left: 4px solid #2563eb; padding-left: 10px; font-size: 18px; }
+        .badge { background: #eff6ff; color: #1d4ed8; font-weight: bold; padding: 4px 10px; border-radius: 6px; font-size: 13px; display: inline-block; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0 25px 0; font-size: 14px; }
+        th, td { padding: 10px 12px; text-align: center; border: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; color: #334155; font-weight: 600; }
+        .pass { color: #16a34a; font-weight: bold; }
+        .fail { color: #dc2626; font-weight: bold; }
+        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 20px; }
+        .highlight { background: #fef3c7; font-weight: 600; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>4D-CT Lung Tumor Motion & PTV Margin Analysis</h1>
-    <p><strong>Lead Author:</strong> Vũ Minh Anh (DOB: 18-11-2006) | <strong>Topic:</strong> Lung Radiotherapy PTV Margin Optimization</p>
-    <div class="badge">Pipeline Version: 1.0 (Open-Source 4D-CT Motion Modeling)</div>
+    <h1>In Silico 4D-CT Lung Tumor Motion & PTV Margin Optimization</h1>
+    <p><strong>Author:</strong> Vũ Minh Anh (HUIT) | <strong>Focus:</strong> Asymmetric Respiration, Tracking Validation, ITV & Anisotropic Margins</p>
+    <div class="badge">Pipeline Version: 2.0 (Peer-Review Refined)</div>
 
-    <h2>1. Kinematic Metrics Summary (Table 1 for Manuscript)</h2>
+    <h2>1. Kinematic Displacements & Tracking Error (Table 1)</h2>
     <table>
         <thead>
             <tr>
@@ -32,90 +33,154 @@
                 <th>AP (Y) Amplitude</th>
                 <th>SI (Z) Amplitude</th>
                 <th>Max 3D Excursion</th>
+                <th>Tracking 3D MAE</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><strong>Regular</strong></td>
-                <td>1.18 mm</td>
+                <td>1.20 mm</td>
                 <td>3.50 mm</td>
-                <td style="color:#2b6cb0; font-weight:bold;">12.00 mm</td>
-                <td>12.56 mm</td>
+                <td style="color:#2563eb; font-weight:bold;">12.00 mm</td>
+                <td>12.33 mm</td>
+                <td>0.031 mm</td>
             </tr>
             <tr>
                 <td><strong>Deep</strong></td>
                 <td>2.00 mm</td>
-                <td>6.07 mm</td>
-                <td style="color:#2b6cb0; font-weight:bold;">22.00 mm</td>
-                <td>22.91 mm</td>
+                <td>6.00 mm</td>
+                <td style="color:#2563eb; font-weight:bold;">22.00 mm</td>
+                <td>22.52 mm</td>
+                <td>0.026 mm</td>
             </tr>
             <tr>
-                <td><strong>Irregular</strong></td>
-                <td>1.58 mm</td>
-                <td>4.36 mm</td>
-                <td style="color:#2b6cb0; font-weight:bold;">14.58 mm</td>
-                <td>13.85 mm</td>
+                <td><strong>Irregular (Monte Carlo N=100)</strong></td>
+                <td>1.70 &plusmn; 0.18 mm</td>
+                <td>4.29 &plusmn; 0.44 mm</td>
+                <td style="color:#2563eb; font-weight:bold;">14.67 &plusmn; 1.14 mm</td>
+                <td>14.86 &plusmn; 1.15 mm</td>
+                <td>0.027 mm</td>
             </tr>
         </tbody>
     </table>
 
-    <h2>2. PTV Coverage Evaluation (Table 2 for Manuscript)</h2>
-    <p>Target criterion: Minimum GTV Coverage across all 10 phases &ge; 95% (ICRU 62/83).</p>
+    <h2>2. Isotropic Margin Coverage & Analytical Volume Benchmark (Table 2)</h2>
     <table>
         <thead>
             <tr>
-                <th>PTV Margin</th>
-                <th>Regular (Min CR %)</th>
-                <th>Deep (Min CR %)</th>
-                <th>Irregular (Min CR %)</th>
-                <th>Clinical Recommendation</th>
+                <th>Margin</th>
+                <th>Voxel Volume</th>
+                <th>Analytical Sphere</th>
+                <th>Volume Diff</th>
+                <th>Regular (Min CR)</th>
+                <th>Regular (Mean CR)</th>
+                <th>Deep (Min CR)</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><strong>2 mm</strong></td>
-                <td class="fail">38.0%</td>
-                <td class="fail">2.6%</td>
-                <td class="fail">31.6%</td>
-                <td>Undermargined</td>
+                <td>11.3 cc</td>
+                <td>11.5 cc</td>
+                <td>-1.6%</td>
+                <td class="fail">42.3%</td>
+                <td>82.0%</td>
+                <td class="fail">2.5%</td>
             </tr>
             <tr>
                 <td><strong>5 mm</strong></td>
-                <td class="fail">59.3%</td>
-                <td class="fail">9.5%</td>
-                <td class="fail">52.6%</td>
-                <td>Undermargined</td>
+                <td>20.6 cc</td>
+                <td>20.6 cc</td>
+                <td>+0.1%</td>
+                <td class="fail">64.8%</td>
+                <td>92.0%</td>
+                <td class="fail">12.1%</td>
             </tr>
             <tr>
                 <td><strong>8 mm</strong></td>
-                <td class="fail">79.7%</td>
-                <td class="fail">21.4%</td>
-                <td class="fail">71.9%</td>
-                <td>Undermargined</td>
+                <td>33.3 cc</td>
+                <td>33.5 cc</td>
+                <td>-0.7%</td>
+                <td class="fail">84.6%</td>
+                <td>97.5%</td>
+                <td class="fail">24.6%</td>
             </tr>
             <tr>
                 <td><strong>10 mm</strong></td>
-                <td class="fail">91.3%</td>
-                <td class="fail">32.5%</td>
-                <td class="fail">85.8%</td>
-                <td>Undermargined</td>
+                <td>44.3 cc</td>
+                <td>44.6 cc</td>
+                <td>-0.6%</td>
+                <td class="fail">94.6%</td>
+                <td>99.4%</td>
+                <td class="fail">35.8%</td>
             </tr>
             <tr>
                 <td><strong>12 mm</strong></td>
-                <td class="pass">98.4%</td>
-                <td class="fail">44.6%</td>
-                <td class="pass">95.6%</td>
-                <td>Optimal for Regular</td>
+                <td>58.0 cc</td>
+                <td>57.9 cc</td>
+                <td>+0.2%</td>
+                <td class="pass">100.0%</td>
+                <td>100.0%</td>
+                <td class="fail">48.9%</td>
             </tr>
         </tbody>
     </table>
 
-    <h2>3. Key Clinical Findings</h2>
+    <h2>3. Target Strategy Comparison: Isotropic vs ITV vs Anisotropic (Table 3)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Target Strategy</th>
+                <th>PTV Volume (cc)</th>
+                <th>Vol vs 5mm Clinical</th>
+                <th>Regular Min CR (%)</th>
+                <th>Deep Min CR (%)</th>
+                <th>Clinical Verdict</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Isotropic 5 mm (Static 3D-CT baseline)</strong></td>
+                <td>20.6 cc</td>
+                <td>Baseline</td>
+                <td class="fail">64.8%</td>
+                <td class="fail">12.1%</td>
+                <td>Fails under respiration (>5 mm excursion)</td>
+            </tr>
+            <tr>
+                <td><strong>Isotropic 12 mm</strong></td>
+                <td>58.0 cc</td>
+                <td>+182%</td>
+                <td class="pass">100.0%</td>
+                <td class="fail">48.9%</td>
+                <td>High normal lung volume penalty</td>
+            </tr>
+            <tr class="highlight">
+                <td><strong>ITV + 3 mm setup margin</strong></td>
+                <td>23.8 cc</td>
+                <td>+16%</td>
+                <td class="pass">100.0%</td>
+                <td class="pass">100.0%</td>
+                <td>Optimal 4D-CT standard approach</td>
+            </tr>
+            <tr class="highlight">
+                <td><strong>Anisotropic PTV (Mid-position + 2 mm)</strong></td>
+                <td>19.2 cc</td>
+                <td>-7%</td>
+                <td class="pass">98.6%</td>
+                <td class="pass">88.8%</td>
+                <td>Maximizes healthy tissue sparing</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>4. Analytical van Herk Recipe Benchmark</h2>
     <div class="card">
+        <p>Theoretical formula: <code>M = 2.5&Sigma; + 0.7&sigma;</code> (for 90% patient population achieving 95% target dose):</p>
         <ul>
-            <li><strong>Superior-Inferior (Z-axis) Dominance:</strong> Diaphragmatic excursion creates longitudinal motion that is 5 to 10 times greater than lateral (X) and anteroposterior (Y) displacements.</li>
-            <li><strong>Failure of Standard Margins under Deep/Irregular Breathing:</strong> While an 8 mm margin achieves &ge;95% coverage in regular breathing, it fails in deep breathing, exposing patients to severe geographical miss.</li>
-            <li><strong>Recommendation:</strong> An adaptive margin expansion (10-12 mm in Z) or active motion management (DIBH/Gating per AAPM TG-76) is strictly required for deep and irregular breathers.</li>
+            <li><strong>Regular Respiration:</strong> SI Margin = <strong>8.37 mm</strong>, AP Margin = 6.65 mm, LR Margin = 6.43 mm.</li>
+            <li><strong>Deep Respiration:</strong> SI Margin = <strong>10.78 mm</strong>, AP Margin = 7.05 mm, LR Margin = 6.49 mm.</li>
+            <li><strong>Analytical Confirmation:</strong> Because the theoretical van Herk margin is 8.37 mm (regular) and 10.78 mm (deep), the conventional 5 mm isotropic margin fails mathematically and empirically.</li>
         </ul>
     </div>
 </div>

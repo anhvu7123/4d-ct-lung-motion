@@ -1,9 +1,7 @@
-# In Silico 4D-CT Lung Tumor Motion & PTV Margin Optimization Project
+# 4D-CT Lung Tumor Motion & PTV Margin Optimization Project
 
 **Tác giả:** Vũ Minh Anh (18-11-2006)  
-**Đề tài:** In Silico 4D-CT-Based Tumor Motion Modeling and Quantitative Evaluation of PTV Margins for Lung Radiotherapy Planning  
-**Target Journal:** Computers in Biology and Medicine (Elsevier)  
-**GitHub Repository:** https://github.com/anhvu7123/4d-ct-lung-motion  
+**Đề tài:** 4D-CT-Based Tumor Motion Modeling and Quantitative Evaluation of PTV Margins for Lung Radiotherapy Planning
 
 ---
 
