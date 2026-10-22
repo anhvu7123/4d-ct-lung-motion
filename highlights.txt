@@ -1,0 +1,5 @@
+Highlights (Computers in Biology and Medicine - Elsevier):
+* An open-source 4D-CT pipeline models 3D lung tumor breathing motion.
+* Z-axis tumor excursion is dominant, reaching up to 22 mm amplitude.
+* Standard 5 mm PTV margins fail under deep and irregular breathing.
+* A 12 mm margin or active motion management is required for ICRU 95%.

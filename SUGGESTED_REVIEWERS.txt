@@ -1,0 +1,31 @@
+LIST OF SUGGESTED INDEPENDENT REVIEWERS
+Journal: Computers in Biology and Medicine (Elsevier)
+Manuscript Title: 4D-CT-Based Tumor Motion Modeling and Quantitative Evaluation of PTV Margins for Lung Radiotherapy Planning
+Lead Author: Vu Minh Anh (Ho Chi Minh City University of Industry and Trade - HUIT)
+
+--------------------------------------------------------------------------------
+1. Prof. Marcel van Herk
+   - Academic Title: Professor of Radiotherapy Physics
+   - Affiliation: Division of Cancer Sciences, The University of Manchester, and The Christie NHS Foundation Trust, United Kingdom
+   - Institutional Email: marcel.vanherk@manchester.ac.uk
+   - Reason for Recommendation: Pioneer and author of the seminal van Herk margin formulation (M = 2.5Σ + 0.7σ) in radiation oncology. Internationally recognized authority on setup errors and geometric uncertainties in radiotherapy.
+
+2. Prof. Paul J. Keall
+   - Academic Title: Professor & Director of ACRF Image X Institute
+   - Affiliation: Faculty of Medicine and Health, The University of Sydney, Australia
+   - Institutional Email: paul.keall@sydney.edu.au
+   - Reason for Recommendation: Lead author and Chair of the landmark AAPM Task Group 76 report on respiratory motion management in radiation oncology. Global authority on real-time tumor tracking and 4D thoracic imaging.
+
+3. Prof. Kristy K. Brock
+   - Academic Title: Professor of Imaging Physics & Radiation Physics
+   - Affiliation: Department of Imaging Physics, The University of Texas MD Anderson Cancer Center, Houston, TX, USA
+   - Institutional Email: kkbrock@mdanderson.org
+   - Reason for Recommendation: Internationally recognized expert in thoracic 4D-CT deformable image registration (DIR), biomechanical motion modeling, and image-guided target delineation.
+
+4. Prof. Per Rugaard Poulsen
+   - Academic Title: Professor of Medical Physics
+   - Affiliation: Department of Clinical Medicine, Aarhus University Hospital, Aarhus, Denmark
+   - Institutional Email: perpouls@rm.dk
+   - Reason for Recommendation: Leading researcher in motion-mitigated radiation therapy, respiratory gating, and real-time internal motion monitoring algorithms.
+--------------------------------------------------------------------------------
+Note: None of the proposed reviewers have had collaborative, financial, or institutional affiliations with the author in the past five years, ensuring completely unbiased and objective peer evaluation.
