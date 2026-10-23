@@ -42,16 +42,16 @@
                 <td>1.20 mm</td>
                 <td>3.50 mm</td>
                 <td style="color:#2563eb; font-weight:bold;">12.00 mm</td>
-                <td>12.33 mm</td>
-                <td>0.031 mm</td>
+                <td>12.38 mm</td>
+                <td>0.032 mm</td>
             </tr>
             <tr>
                 <td><strong>Deep</strong></td>
                 <td>2.00 mm</td>
                 <td>6.00 mm</td>
                 <td style="color:#2563eb; font-weight:bold;">22.00 mm</td>
-                <td>22.52 mm</td>
-                <td>0.026 mm</td>
+                <td>22.60 mm</td>
+                <td>0.025 mm</td>
             </tr>
             <tr>
                 <td><strong>Irregular (Monte Carlo N=100)</strong></td>
@@ -59,7 +59,7 @@
                 <td>4.29 &plusmn; 0.44 mm</td>
                 <td style="color:#2563eb; font-weight:bold;">14.67 &plusmn; 1.14 mm</td>
                 <td>14.86 &plusmn; 1.15 mm</td>
-                <td>0.027 mm</td>
+                <td>0.028 mm</td>
             </tr>
         </tbody>
     </table>
@@ -83,36 +83,36 @@
                 <td>11.3 cc</td>
                 <td>11.5 cc</td>
                 <td>-1.6%</td>
-                <td class="fail">42.3%</td>
-                <td>82.0%</td>
-                <td class="fail">2.5%</td>
+                <td class="fail">42.1%</td>
+                <td>81.8%</td>
+                <td class="fail">2.3%</td>
             </tr>
             <tr>
                 <td><strong>5 mm</strong></td>
                 <td>20.6 cc</td>
                 <td>20.6 cc</td>
                 <td>+0.1%</td>
-                <td class="fail">64.8%</td>
-                <td>92.0%</td>
-                <td class="fail">12.1%</td>
+                <td class="fail">64.7%</td>
+                <td>91.9%</td>
+                <td class="fail">11.7%</td>
             </tr>
             <tr>
                 <td><strong>8 mm</strong></td>
                 <td>33.3 cc</td>
                 <td>33.5 cc</td>
                 <td>-0.7%</td>
-                <td class="fail">84.6%</td>
-                <td>97.5%</td>
-                <td class="fail">24.6%</td>
+                <td class="fail">84.4%</td>
+                <td>97.4%</td>
+                <td class="fail">24.2%</td>
             </tr>
             <tr>
                 <td><strong>10 mm</strong></td>
                 <td>44.3 cc</td>
                 <td>44.6 cc</td>
                 <td>-0.6%</td>
-                <td class="fail">94.6%</td>
+                <td class="fail">94.5%</td>
                 <td>99.4%</td>
-                <td class="fail">35.8%</td>
+                <td class="fail">35.3%</td>
             </tr>
             <tr>
                 <td><strong>12 mm</strong></td>
@@ -121,7 +121,7 @@
                 <td>+0.2%</td>
                 <td class="pass">100.0%</td>
                 <td>100.0%</td>
-                <td class="fail">48.9%</td>
+                <td class="fail">48.3%</td>
             </tr>
         </tbody>
     </table>
@@ -143,8 +143,8 @@
                 <td><strong>Isotropic 5 mm (Static 3D-CT baseline)</strong></td>
                 <td>20.6 cc</td>
                 <td>Baseline</td>
-                <td class="fail">64.8%</td>
-                <td class="fail">12.1%</td>
+                <td class="fail">64.7%</td>
+                <td class="fail">11.7%</td>
                 <td>Fails under respiration (>5 mm excursion)</td>
             </tr>
             <tr>
@@ -152,12 +152,12 @@
                 <td>58.0 cc</td>
                 <td>+182%</td>
                 <td class="pass">100.0%</td>
-                <td class="fail">48.9%</td>
+                <td class="fail">48.3%</td>
                 <td>High normal lung volume penalty</td>
             </tr>
             <tr class="highlight">
                 <td><strong>ITV + 3 mm setup margin</strong></td>
-                <td>23.8 cc</td>
+                <td>23.9 cc</td>
                 <td>+16%</td>
                 <td class="pass">100.0%</td>
                 <td class="pass">100.0%</td>
@@ -165,10 +165,10 @@
             </tr>
             <tr class="highlight">
                 <td><strong>Anisotropic PTV (Mid-position + 2 mm)</strong></td>
-                <td>19.2 cc</td>
+                <td>19.3 cc</td>
                 <td>-7%</td>
                 <td class="pass">98.6%</td>
-                <td class="pass">88.8%</td>
+                <td class="pass">89.0%</td>
                 <td>Maximizes healthy tissue sparing</td>
             </tr>
         </tbody>
@@ -180,7 +180,7 @@
         <ul>
             <li><strong>Regular Respiration:</strong> SI Margin = <strong>8.37 mm</strong>, AP Margin = 6.65 mm, LR Margin = 6.43 mm.</li>
             <li><strong>Deep Respiration:</strong> SI Margin = <strong>10.78 mm</strong>, AP Margin = 7.05 mm, LR Margin = 6.49 mm.</li>
-            <li><strong>Analytical Confirmation:</strong> Because the theoretical van Herk margin is 8.37 mm (regular) and 10.78 mm (deep), the conventional 5 mm isotropic margin fails mathematically and empirically.</li>
+            <li><strong>Interpretation:</strong> The van Herk formula predicts required SI margins of 8.37 mm (regular) and 10.78 mm (deep), substantially larger than the conventional 5 mm isotropic margin — consistent with the empirical CR failures observed in this simulation. Note that the van Herk recipe carries its own assumptions (rigid setup error distributions, dose-response model) and serves here as a population-level benchmark rather than a definitive proof of failure.</li>
         </ul>
     </div>
 </div>

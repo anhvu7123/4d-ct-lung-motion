@@ -78,16 +78,18 @@ def generate_dynamic_phantom(scenario='regular', nz=70, ny=90, nx=90, dz=2.0, dy
     y_norm = (y_raw - np.min(y_raw)) / (np.max(y_raw) - np.min(y_raw))
     x_norm = (x_raw - np.min(x_raw)) / (np.max(x_raw) - np.min(x_raw))
 
+    # T4 is the true end-exhalation reference (cos^4 reaches minimum=0 at T4)
+    # z_norm[4] ≈ 0.0, z_norm[5] ≈ 0.004 — T4 is used for consistency with model definition
     if scenario == 'regular':
         amp_z, amp_y, amp_x = 12.0, 3.5, 1.2
-        tz_t = base_tz - amp_z * (z_norm - z_norm[5])
-        ty_t = base_ty - amp_y * (y_norm - y_norm[5])
-        tx_t = base_tx - amp_x * (x_norm - x_norm[5])
+        tz_t = base_tz - amp_z * (z_norm - z_norm[4])
+        ty_t = base_ty - amp_y * (y_norm - y_norm[4])
+        tx_t = base_tx - amp_x * (x_norm - x_norm[4])
     elif scenario == 'deep':
         amp_z, amp_y, amp_x = 22.0, 6.0, 2.0
-        tz_t = base_tz - amp_z * (z_norm - z_norm[5])
-        ty_t = base_ty - amp_y * (y_norm - y_norm[5])
-        tx_t = base_tx - amp_x * (x_norm - x_norm[5])
+        tz_t = base_tz - amp_z * (z_norm - z_norm[4])
+        ty_t = base_ty - amp_y * (y_norm - y_norm[4])
+        tx_t = base_tx - amp_x * (x_norm - x_norm[4])
     elif scenario == 'irregular':
         # Single representative irregular cycle from Monte Carlo ensemble
         np.random.seed(42)
@@ -95,9 +97,9 @@ def generate_dynamic_phantom(scenario='regular', nz=70, ny=90, nx=90, dz=2.0, dy
         jitter_z = np.array([0.2, -0.4, 0.5, -0.3, 0.1, -0.2, 0.4, -0.5, 0.3, -0.1])
         jitter_y = 0.3 * jitter_z
         jitter_x = 0.1 * jitter_z
-        tz_t = base_tz - amp_z * (z_norm - z_norm[5]) + jitter_z
-        ty_t = base_ty - amp_y * (y_norm - y_norm[5]) + jitter_y
-        tx_t = base_tx - amp_x * (x_norm - x_norm[5]) + jitter_x
+        tz_t = base_tz - amp_z * (z_norm - z_norm[4]) + jitter_z
+        ty_t = base_ty - amp_y * (y_norm - y_norm[4]) + jitter_y
+        tx_t = base_tx - amp_x * (x_norm - x_norm[4]) + jitter_x
 
     for t in range(n_phases):
         vol = np.full((nz, ny, nx), -1000, dtype=np.int16) # Ambient Air: -1000 HU
@@ -155,13 +157,15 @@ def segment_and_track_centroids(volumes, spacing):
 
     return tracked_centroids, segmented_masks
 
-def evaluate_target_strategies(masks, true_centroids, spacing, margins_mm=[2, 5, 8, 10, 12], ref_phase=5):
+def evaluate_target_strategies(masks, true_centroids, spacing, margins_mm=[2, 5, 8, 10, 12], ref_phase=4):
     """
     Evaluate 3 Target Volume Strategies:
-    Strategy 1: Isotropic PTV around End-Expiration GTV (T5).
+    Strategy 1: Isotropic PTV around End-Expiration GTV (T4, the true end-exhalation phase).
     Strategy 2: Internal Target Volume (ITV) + Setup Margins (2, 3, 5 mm).
     Strategy 3: Anisotropic PTV around Mid-Position / Directional Margins.
     Calculates exact surface-based Euclidean distance to eliminate EDT discretization bias.
+    Note: ref_phase=4 corresponds to T4, where cos^4(theta/2)=0 (minimum displacement),
+    consistent with the asymmetric 60:40 breathing model.
     """
     n_phases = len(masks)
     nz, ny, nx = masks[0].shape
@@ -383,7 +387,7 @@ def run_experiment():
         p2p_z = float(np.max(gt_centroids[:, 0]) - np.min(gt_centroids[:, 0]))
         p2p_y = float(np.max(gt_centroids[:, 1]) - np.min(gt_centroids[:, 1]))
         p2p_x = float(np.max(gt_centroids[:, 2]) - np.min(gt_centroids[:, 2]))
-        disp_3d = float(np.max(np.sqrt(np.sum((gt_centroids - gt_centroids[5])**2, axis=1))))
+        disp_3d = float(np.max(np.sqrt(np.sum((gt_centroids - gt_centroids[4])**2, axis=1))))
 
         iso_res, itv_res, aniso_res = evaluate_target_strategies(masks, gt_centroids, spacing)
         vh_calc = calculate_van_herk(p2p_z, p2p_y, p2p_x)
@@ -475,7 +479,11 @@ def run_experiment():
             json.dump(all_results, f, indent=2)
         generate_interactive_report(all_results, os.path.join(out_d, "report.html"))
 
-    print("\n[SUCCESS] Pipeline completed cleanly. JSON & interactive HTML reports generated.")
+    # Generate figures (saved to primary output dir)
+    fig_dir = output_dirs[0]
+    generate_figures(all_results, fig_dir)
+
+    print("\n[SUCCESS] Pipeline completed cleanly. JSON, HTML & figures generated.")
 
 def generate_interactive_report(results, report_path):
     mc = results['mc_irregular']
@@ -638,7 +646,7 @@ def generate_interactive_report(results, report_path):
         <ul>
             <li><strong>Regular Respiration:</strong> SI Margin = <strong>{vh_reg['Z']:.2f} mm</strong>, AP Margin = {vh_reg['Y']:.2f} mm, LR Margin = {vh_reg['X']:.2f} mm.</li>
             <li><strong>Deep Respiration:</strong> SI Margin = <strong>{vh_deep['Z']:.2f} mm</strong>, AP Margin = {vh_deep['Y']:.2f} mm, LR Margin = {vh_deep['X']:.2f} mm.</li>
-            <li><strong>Analytical Confirmation:</strong> Because the theoretical van Herk margin is 8.37 mm (regular) and 10.78 mm (deep), the conventional 5 mm isotropic margin fails mathematically and empirically.</li>
+            <li><strong>Interpretation:</strong> The van Herk formula predicts required SI margins of 8.37 mm (regular) and 10.78 mm (deep), substantially larger than the conventional 5 mm isotropic margin — consistent with the empirical CR failures observed in this simulation. Note that the van Herk recipe carries its own assumptions (rigid setup error distributions, dose-response model) and serves here as a population-level benchmark rather than a definitive proof of failure.</li>
         </ul>
     </div>
 </div>
@@ -646,6 +654,153 @@ def generate_interactive_report(results, report_path):
 </html>"""
     with open(report_path, "w") as f:
         f.write(html)
+
+def generate_figures(results, out_dir):
+    """
+    Generate 4 publication-quality figures:
+    Fig 1: Phantom anatomy (central coronal + axial slice at T0)
+    Fig 2: Tumor centroid 3D trajectory by phase (SI/AP/LR) — asymmetric 60:40
+    Fig 3: Coverage rate vs phase for each PTV strategy
+    Fig 4: PTV volume vs Min CR tradeoff across all strategies
+    """
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("[WARNING] matplotlib not available — skipping figure generation.")
+        return
+
+    phases = np.arange(10)
+    phase_labels = [f'T{i}' for i in range(10)]
+
+    # ── Figure 1: Phantom Anatomy ──────────────────────────────────────────
+    vols, masks, spacing, gt_centroids = generate_dynamic_phantom(scenario='regular')
+    nz, ny, nx = vols[0].shape
+    dz, dy, dx = spacing
+    fig1, axes = plt.subplots(1, 2, figsize=(11, 5))
+    fig1.suptitle('Figure 1: Synthetic Thorax Phantom — HU Distribution', fontsize=13, fontweight='bold')
+
+    y_mid = ny // 2
+    img_cor = vols[0][:, y_mid, :]
+    im1 = axes[0].imshow(img_cor, cmap='gray', vmin=-1000, vmax=400,
+                         extent=[0, nx*dx, nz*dz, 0], aspect='auto')
+    axes[0].set_title('Coronal Slice (T0 — Peak Inhalation)')
+    axes[0].set_xlabel('LR (mm)'); axes[0].set_ylabel('SI (mm)')
+    plt.colorbar(im1, ax=axes[0], label='HU')
+
+    z_tumor = int(nz // 2)
+    img_ax = vols[0][z_tumor, :, :]
+    im2 = axes[1].imshow(img_ax, cmap='gray', vmin=-1000, vmax=400,
+                         extent=[0, nx*dx, ny*dy, 0], aspect='auto')
+    axes[1].set_title('Axial Slice (T0 — tumor level)')
+    axes[1].set_xlabel('LR (mm)'); axes[1].set_ylabel('AP (mm)')
+    plt.colorbar(im2, ax=axes[1], label='HU')
+
+    fig1.tight_layout()
+    fig1.savefig(os.path.join(out_dir, 'fig1_phantom.png'), dpi=150, bbox_inches='tight')
+    plt.close(fig1)
+    print("  [Fig 1] Phantom anatomy saved.")
+
+    # ── Figure 2: Centroid Trajectory ─────────────────────────────────────
+    colors_sc = {'regular': '#2563eb', 'deep': '#dc2626', 'irregular': '#16a34a'}
+    labels_sc = {'regular': 'Regular (Az=12mm)', 'deep': 'Deep (Az=22mm)', 'irregular': 'Irregular'}
+
+    fig2, ax2s = plt.subplots(1, 3, figsize=(13, 4))
+    fig2.suptitle('Figure 2: Tumor Centroid Trajectories (ref: T4 end-exhalation)', fontsize=12, fontweight='bold')
+    directions = [('SI (Z)', 0), ('AP (Y)', 1), ('LR (X)', 2)]
+
+    for ax_i, (dir_label, dim) in enumerate(directions):
+        ax = ax2s[ax_i]
+        for sc in ['regular', 'deep', 'irregular']:
+            gt = np.array(results[sc]['gt_centroids'])
+            disp = gt[:, dim] - gt[4, dim]
+            ax.plot(phases, disp, 'o-', color=colors_sc[sc], label=labels_sc[sc], linewidth=2, markersize=5)
+        ax.axvline(x=4, color='gray', linestyle='--', alpha=0.7, label='T4: End-exhale')
+        ax.axhline(y=0, color='gray', linestyle=':', alpha=0.5)
+        ax.set_title(f'{dir_label} Displacement')
+        ax.set_xlabel('Phase Index'); ax.set_ylabel('Displacement (mm)')
+        ax.set_xticks(phases); ax.set_xticklabels(phase_labels, fontsize=8)
+        if ax_i == 0:
+            ax.legend(fontsize=8)
+
+    fig2.tight_layout()
+    fig2.savefig(os.path.join(out_dir, 'fig2_trajectory.png'), dpi=150, bbox_inches='tight')
+    plt.close(fig2)
+    print("  [Fig 2] Trajectory plot saved.")
+
+    # ── Figure 3: Coverage Rate vs Phase ──────────────────────────────────
+    fig3, ax3s = plt.subplots(1, 2, figsize=(13, 5))
+    fig3.suptitle('Figure 3: Coverage Rate (CR) vs Respiratory Phase (ICRU 95% threshold)',
+                  fontsize=12, fontweight='bold')
+
+    def get_cov(d, k):
+        return d[k]['coverages'] if k in d else d[str(k)]['coverages']
+
+    for ax3, sc_name in zip(ax3s, ['regular', 'deep']):
+        sc_iso = results[sc_name]['iso_ptv']
+        sc_itv = results[sc_name]['itv_ptv']
+        sc_aniso = results[sc_name]['aniso_ptv']
+        strats = [
+            ('Isotropic 5mm', get_cov(sc_iso, 5), '#dc2626', '--'),
+            ('Isotropic 12mm', get_cov(sc_iso, 12), '#f59e0b', '--'),
+            ('ITV+3mm', [sc_itv['ITV + 3mm setup']['min_coverage']]*10, '#16a34a', '-'),
+            ('Anisotropic+2mm', [sc_aniso['Anisotropic (Mid-pos + 2mm setup)']['min_coverage']]*10, '#2563eb', '-'),
+        ]
+        for label, covs, col, ls in strats:
+            ax3.plot(phases, covs, ls, color=col, label=label, linewidth=2, marker='o', markersize=4)
+        ax3.axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% ICRU')
+        ax3.axvline(x=4, color='gray', linestyle='--', alpha=0.6)
+        ax3.set_ylim(60, 105)
+        ax3.set_title(f'{sc_name.capitalize()} Breathing')
+        ax3.set_xlabel('Phase Index'); ax3.set_ylabel('CR (%)')
+        ax3.set_xticks(phases); ax3.set_xticklabels(phase_labels, fontsize=8)
+        ax3.legend(fontsize=8)
+
+    fig3.tight_layout()
+    fig3.savefig(os.path.join(out_dir, 'fig3_coverage.png'), dpi=150, bbox_inches='tight')
+    plt.close(fig3)
+    print("  [Fig 3] Coverage rate plot saved.")
+
+    # ── Figure 4: PTV Volume vs Min CR Tradeoff ────────────────────────────
+    fig4, ax4s = plt.subplots(1, 2, figsize=(12, 5))
+    fig4.suptitle('Figure 4: PTV Volume vs Minimum Coverage Rate Tradeoff', fontsize=12, fontweight='bold')
+
+    for ax4, sc_name in zip(ax4s, ['regular', 'deep']):
+        sc_iso = results[sc_name]['iso_ptv']
+        sc_itv = results[sc_name]['itv_ptv']
+        sc_aniso = results[sc_name]['aniso_ptv']
+
+        iso_vols = [sc_iso[k if k in sc_iso else str(k)]['ptv_volume_cc'] for k in [2, 5, 8, 10, 12]]
+        iso_crs = [sc_iso[k if k in sc_iso else str(k)]['min_coverage'] for k in [2, 5, 8, 10, 12]]
+        ax4.plot(iso_vols, iso_crs, 'o--', color='#f59e0b', label='Isotropic (2–12mm)', linewidth=2)
+        for m, v, c in zip([2, 5, 8, 10, 12], iso_vols, iso_crs):
+            ax4.annotate(f'{m}mm', (v, c), textcoords='offset points', xytext=(4, 3), fontsize=8)
+
+        for k, col, mk in [('ITV', '#9ca3af', '^'), ('ITV + 2mm setup', '#6b7280', 's'),
+                            ('ITV + 3mm setup', '#16a34a', 'D'), ('ITV + 5mm setup', '#15803d', 'P')]:
+            if k in sc_itv:
+                ax4.scatter(sc_itv[k]['ptv_volume_cc'], sc_itv[k]['min_coverage'],
+                            color=col, marker=mk, s=90, label=k, zorder=5)
+
+        for k, col in [('Anisotropic (Mid-pos + 2mm setup)', '#2563eb'),
+                       ('Anisotropic (Mid-pos + 3mm setup)', '#1d4ed8')]:
+            if k in sc_aniso:
+                ax4.scatter(sc_aniso[k]['ptv_volume_cc'], sc_aniso[k]['min_coverage'],
+                            color=col, marker='*', s=180, label=k.replace('Anisotropic (Mid-pos + ', 'Aniso+').replace('mm setup)', 'mm)'), zorder=5)
+
+        ax4.axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% ICRU')
+        ax4.set_title(f'{sc_name.capitalize()} Breathing')
+        ax4.set_xlabel('PTV Volume (cc)'); ax4.set_ylabel('Min CR (%)')
+        ax4.legend(fontsize=7, loc='lower right')
+
+    fig4.tight_layout()
+    fig4.savefig(os.path.join(out_dir, 'fig4_tradeoff.png'), dpi=150, bbox_inches='tight')
+    plt.close(fig4)
+    print("  [Fig 4] PTV vs CR tradeoff saved.")
+
+    print(f"[FIGURES] All 4 figures saved to: {out_dir}")
+
 
 if __name__ == '__main__':
     run_experiment()
