@@ -20,9 +20,9 @@ To overcome the **methodological tautology** prevalent in prior literature (eval
 2. **Multi-regimen population setup uncertainties** across $N_{\text{pat}} = 200$ virtual patients ($7,600$ total treatment sessions):
    - **SBRT 3-fraction course** ($3 \times 18$ Gy, 600 sessions)
    - **SBRT 5-fraction course** ($5 \times 10$ Gy, 1,000 sessions)
-   - **Conventional 30-fraction course** ($30 \times 2$ Gy, 6,000 sessions)
-   incorporating independent 3D systematic ($\Sigma = 2.0$ mm) and random ($\sigma = 2.0$ mm) setup errors, directly aligned with **AAPM Task Group 324 Report 91.b (2026)** and the **van Herk margin recipe**.
-3. **Multi-lesion target coverage robustness** evaluated across small ($r = 8$ mm, 2.1 cc), nominal ($r = 12$ mm, 7.2 cc), and large ($r = 16$ mm, 17.2 cc) lesions.
+   - **Conventional 30-fraction course** ($30 \times 2$ Gy, 6,000 sessions)  
+   incorporating independent 3D systematic ($\Sigma = 2.0$ mm, constant per patient) and random ($\sigma = 2.0$ mm, daily sampled) setup errors, directly aligned with **AAPM Task Group 324 Report 91.b (2026)** and the **van Herk margin recipe**. Fraction pass rates are evaluated using **95% Patient-Level Cluster Bootstrap** ($B = 2,000$ resamples) to account for intra-patient correlation.
+3. **Multi-lesion target coverage robustness** evaluated across small ($r = 8$ mm, 2.1 cc), nominal ($r = 12$ mm, 7.2 cc), and large ($r = 16$ mm, 17.2 cc) lesions ($N = 2,000$ cycles per lesion size; $N_{\text{pat}} = 200$ virtual patients).
 
 ---
 
@@ -63,7 +63,7 @@ pip install -r requirements.txt
 ```bash
 python3 main.py
 ```
-This executes the 6-phase pipeline in ~35 seconds, producing `simulation_results.json` and all 6 publication-quality figures (`fig1` through `fig6`).
+This executes the 6-phase pipeline in ~39 seconds, producing `simulation_results.json` and all 6 publication-quality figures (`fig1` through `fig6`).
 
 ### 3. Generate Manuscript & Cover Letter
 ```bash
@@ -78,27 +78,27 @@ Generates `manuscript.docx`, `manuscript.tex`, `manuscript.pdf`, and `COVER_LETT
 
 ### Table 3: Target Strategy Comparison & Setup Uncertainty across 200 Virtual Patients (7,600 Sessions)
 
-| Strategy | PTV Vol (cc) | Vol vs 5mm | Plan Min CR | Irreg MC Pass (95% Wilson CI) | SBRT 3-fx All-Pass (95% Wilson CI) | SBRT 5-fx All-Pass (95% Wilson CI) | CFRT 30-fx Frac-Pass (95% Wilson CI) |
+| Strategy | PTV Vol (cc) | Vol vs 5mm | Plan Min CR | Irreg MC Pass (95% Wilson CI) | SBRT 3-fx All-Pass (95% Wilson CI) | SBRT 5-fx All-Pass (95% Wilson CI) | CFRT 30-fx Frac-Pass (95% Cluster Boot) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Isotropic 5 mm** | 20.6 | Baseline | 64.7% | 0.0% [0.0%, 0.1%] | 0.0% [0.0%, 1.9%] | 0.0% [0.0%, 1.9%] | 1.1% [0.8%, 1.4%] |
-| **Isotropic 12 mm** | 58.0 | +182% | 100.0% | 29.9% [28.6%, 31.1%] | 37.5% [31.1%, 44.4%] | 31.5% [25.4%, 38.3%] | 64.9% [63.7%, 66.1%] |
-| **ITV + 2 mm setup** | 22.2 | +7.6% | 100.0% | 55.4% [54.0%, 56.8%] | 1.5% [0.5%, 4.3%] | 0.0% [0.0%, 1.9%] | 27.2% [26.1%, 28.3%] |
-| **ITV + 3 mm setup** | 23.9 | +16.0% | 100.0% | 87.1% [86.1%, 88.0%] | 16.5% [12.0%, 22.3%] | 6.0% [3.5%, 10.2%] | 46.4% [45.2%, 47.7%] |
-| **ITV + 4 mm (TG-324)** | 25.7 | +24.9% | 100.0% | 87.2% [86.3%, 88.1%] | 42.0% [35.3%, 49.0%] | 27.0% [21.3%, 33.6%] | 67.2% [66.0%, 68.3%] |
-| **ITV + 5 mm (TG-324)** | 27.7 | +34.3% | 100.0% | **97.9% [97.5%, 98.3%]** | **66.0% [59.2%, 72.2%]** | **53.0% [46.1%, 59.8%]** | **82.7% [81.7%, 83.7%]** |
-| **Anisotropic (Mid-pos + 2mm)** | 19.3 | -6.3% | 99.4% | 18.3% [17.3%, 19.4%] | 0.5% [0.1%, 2.8%] | 0.0% [0.0%, 1.9%] | 16.5% [15.6%, 17.5%] |
-| **Anisotropic (Mid-pos + 3mm)** | 22.0 | +6.9% | 100.0% | 53.1% [51.7%, 54.5%] | 12.0% [8.2%, 17.2%] | 4.0% [2.0%, 7.8%] | 37.4% [36.2%, 38.7%] |
+| **Isotropic 5 mm** | 20.6 | Baseline | 64.7% | 0.0% [0.0%, 0.1%] | 0.0% [0.0%, 1.9%] | 0.0% [0.0%, 1.9%] | 1.5% [1.1%, 1.9%] |
+| **Isotropic 12 mm** | 58.0 | +182% | 100.0% | 29.9% [28.6%, 31.1%] | 37.5% [31.1%, 44.4%] | 31.5% [25.4%, 38.3%] | 64.9% [63.2%, 66.7%] |
+| **ITV + 2 mm setup** | 22.2 | +7.6% | 100.0% | 55.4% [54.0%, 56.8%] | 1.5% [0.5%, 4.3%] | 0.0% [0.0%, 1.9%] | 27.2% [25.7%, 28.7%] |
+| **ITV + 3 mm setup** | 22.3 | +8.3% | 100.0% | 68.3% [67.0%, 69.5%] | 16.5% [12.0%, 22.3%] | 6.0% [3.5%, 10.2%] | 46.4% [43.6%, 49.3%] |
+| **ITV + 4 mm (TG-324)** | 26.2 | +27.3% | 100.0% | 87.2% [86.3%, 88.1%] | 42.0% [35.3%, 49.0%] | 27.0% [21.3%, 33.6%] | 67.2% [65.5%, 68.9%] |
+| **ITV + 5 mm (TG-324)** | 31.0 | +50.3% | 100.0% | **96.2% [95.7%, 96.7%]** | **66.0% [59.2%, 72.2%]** | **53.0% [46.1%, 59.8%]** | **82.7% [80.5%, 84.9%]** |
+| **Anisotropic (Mid-pos + 2mm)** | 19.3 | -6.3% | 99.4% | 18.3% [17.3%, 19.4%] | 0.5% [0.1%, 2.8%] | 0.0% [0.0%, 1.9%] | 20.4% [19.0%, 21.8%] |
+| **Anisotropic (Mid-pos + 3mm)** | 22.0 | +6.9% | 100.0% | 53.1% [51.7%, 54.5%] | 12.0% [8.2%, 17.2%] | 4.0% [2.0%, 7.8%] | 37.4% [35.8%, 39.0%] |
 
-### Table 4: Multi-Lesion Target Coverage Robustness
+### Table 4: Multi-Lesion Target Coverage Robustness ($N=2,000$ MC Cycles, $N_{\text{pat}}=200$ Patients)
 
-| Lesion Radius (mm) | Target Strategy | PTV Vol (cc) | Plan Min CR | Irreg MC Pass (95% Wilson CI) | SBRT 5-fx Frac-Pass | SBRT 5-fx All-Pass (95% Wilson CI) |
+| Lesion Radius (mm) | Target Strategy | PTV Vol (cc) | Plan Min CR | Irreg MC Pass (95% Wilson CI) | SBRT 5-fx Frac-Pass (95% Cluster Boot) | SBRT 5-fx All-Pass (95% Wilson CI) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **r = 8 mm (Small, 2.1 cc)** | ITV + 3 mm setup | 9.9 | 100.0% | 54.9% [52.7%, 57.1%] | 33.2% | 0.5% [0.1%, 2.8%] |
-| | ITV + 5 mm setup | 15.1 | 100.0% | 86.3% [84.7%, 87.7%] | 73.8% | 29.5% [23.6%, 36.2%] |
-| **r = 12 mm (Nominal, 7.2 cc)** | ITV + 3 mm setup | 22.3 | 100.0% | 67.8% [65.7%, 69.8%] | 45.8% | 6.5% [3.8%, 10.8%] |
-| | ITV + 5 mm setup | 31.0 | 100.0% | 96.3% [95.4%, 97.0%] | 84.3% | 51.0% [44.1%, 57.8%] |
-| **r = 16 mm (Large, 17.2 cc)** | ITV + 3 mm setup | 41.7 | 100.0% | 81.2% [79.5%, 82.9%] | 53.7% | 9.0% [5.8%, 13.8%] |
-| | ITV + 5 mm setup | 54.5 | 100.0% | 97.8% [97.1%, 98.4%] | 88.0% | 60.0% [53.1%, 66.5%] |
+| **r = 8 mm (Small, 2.1 cc)** | ITV + 3 mm setup | 9.9 | 100.0% | 54.9% [52.7%, 57.1%] | 33.2% [29.8%, 36.5%] | 0.5% [0.1%, 2.8%] |
+| | ITV + 5 mm setup | 15.1 | 100.0% | 86.3% [84.7%, 87.7%] | 73.8% [70.4%, 77.1%] | 29.5% [23.6%, 36.2%] |
+| **r = 12 mm (Nominal, 7.2 cc)** | ITV + 3 mm setup | 22.3 | 100.0% | 67.8% [65.7%, 69.8%] | 45.8% [41.8%, 49.7%] | 6.5% [3.8%, 10.8%] |
+| | ITV + 5 mm setup | 31.0 | 100.0% | 96.3% [95.4%, 97.0%] | 84.3% [81.5%, 86.9%] | 51.0% [44.1%, 57.8%] |
+| **r = 16 mm (Large, 17.2 cc)** | ITV + 3 mm setup | 41.7 | 100.0% | 81.2% [79.5%, 82.9%] | 53.7% [50.0%, 57.3%] | 9.0% [5.8%, 13.8%] |
+| | ITV + 5 mm setup | 54.5 | 100.0% | 97.8% [97.1%, 98.4%] | 88.0% [85.7%, 90.3%] | 60.0% [53.1%, 66.5%] |
 
 > **Clinical Takeaway:** While tight ITV margins ($\le 3$ mm) and anisotropic expansions achieve normal tissue sparing on regular planning 4D-CT, they deteriorate sharply under setup uncertainty in hypofractionated SBRT (dropping from 100% to only 6.0% all-fraction success for 5-fraction courses). In concordance with AAPM TG-324 Report 91.b, an ITV setup margin of 4–5 mm is a standard baseline for free-breathing lung SBRT. However, even with ITV + 5 mm, geometric undercoverage persists (17.3% fraction failure in CFRT, 47.0% whole-course failure in SBRT 5-fx), underscoring that margins alone cannot eliminate geometric miss without daily volumetric image guidance (CBCT) and active motion management.
 

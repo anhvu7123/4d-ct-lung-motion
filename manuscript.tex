@@ -1,199 +1,97 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[10pt,twocolumn]{article}
 \usepackage[utf8]{inputenc}
-\usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{cite}
-\usepackage{caption}
 
 \title{\textbf{In Silico Evaluation of 4D-CT Lung Tumor Kinematics, Target Margin Strategies, and Coverage Robustness Under Respiratory Variations and Setup Uncertainties}}
-\author{\textbf{Vu Minh Anh}\\
-\small Faculty of Information Technology, Ho Chi Minh City University of Industry and Trade (HUIT)\\
-\small Ho Chi Minh City, Vietnam \quad Email: \texttt{anhvm@huit.edu.vn}}
-\date{October 2026}
+\author{\textbf{Vu Minh Anh, B.S.}\\
+\textit{Faculty of Information Technology, Ho Chi Minh City University of Industry and Trade (HUIT), Vietnam}\\
+\textit{Email: anhvm@huit.edu.vn | GitHub: \url{https://github.com/anhvu7123/4d-ct-lung-motion}}}
+\date{Revision 3.2 -- October 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-\noindent\textbf{Background:} Accurate management of respiratory motion remains a critical challenge in stereotactic body radiation therapy (SBRT) for lung cancer. Conventional static 3D-CT expansions frequently either underdose moving tumors or unnecessarily irradiate healthy lung parenchyma. This study presents a comprehensive in silico framework evaluating 4D-CT respiratory kinematics, internal target volume (ITV) expansions, and anisotropic margins, with rigorous robustness testing under unseen breathing cycles and multi-regimen setup uncertainties (SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx across 200 virtual patients).\\
-\textbf{Methods:} A 10-phase synthetic thorax phantom was constructed incorporating an asymmetric 60:40 breathing cycle (60\% exhalation across $T_0 \to T_6$; 40\% inhalation across $T_6 \to T_0$; $T_6$ designated as end-exhalation reference) with Lujan $n=2$ resting dwell and $36^\circ$ AP/LR hysteresis. Three lesion sizes ($r=8, 12, 16$~mm) and three motion profiles were evaluated. Frozen planning PTVs (Isotropic 2--12~mm, ITV + 0--5~mm, Anisotropic 2--4~mm) were tested across $N=5{,}000$ independent unseen cycles (Monte Carlo with 95\% Wilson score confidence intervals) and evaluated under combined breathing and setup uncertainties across 200 virtual patients (total 7,600 treatment sessions with 2~mm systematic and 2~mm random errors) aligned with AAPM TG-324 Report 91.b.\\
-\textbf{Results:} Centroid tracking achieved 3D MAE of 0.058~mm, 0.034~mm, and 0.021~mm for 8~mm, 12~mm, and 16~mm lesions. Conventional 5~mm isotropic expansion achieved only 64.7\% planning minimum coverage. Both ITV + 3~mm (23.9~cc) and Anisotropic + 2~mm (19.3~cc, $-6.3\%$ volume vs. 5~mm isotropic baseline) achieved $\ge 99.4\%$ planning coverage. Under unseen irregular breathing with baseline drift ($N=5{,}000$), ITV + 3~mm pass rate dropped to 68.3\% (95\% Wilson CI: [67.0\%, 69.5\%]; mean min CR: 96.0\%, empirical range: [82.8\%, 100.0\%]), whereas ITV + 5~mm maintained a 96.2\% pass rate (95\% Wilson CI: [95.7\%, 96.7\%]; mean min CR: 99.2\%, empirical range: [94.7\%, 100.0\%]). Under setup uncertainty across 200 virtual patients, tight margins proved severely inadequate in SBRT: for 5-fraction SBRT, ITV + 3~mm yielded only 6.0\% patient all-fraction success, whereas ITV + 5~mm restored all-fraction success to 53.0\% (and 66.0\% in 3-fraction SBRT). In 30-fraction conventional therapy, ITV + 5~mm achieved an 82.7\% fraction pass rate. Multi-lesion analysis revealed that small lesions ($r=8$~mm, 2.1~cc) suffer disproportionate edge undercoverage (SBRT 5-fx all-pass of only 0.5\% for ITV+3mm and 29.5\% for ITV+5mm).\\
-\textbf{Conclusions:} While expanding the ITV setup margin to 4--5~mm substantially improved geometric robustness compared to tight 3~mm expansions, it did not eliminate undercoverage: 17.3\% of treatment fractions in conventional radiotherapy and 47.0\% of patients in 5-fraction SBRT experienced geometric undercoverage without daily correction. In concordance with AAPM TG-324 Report 91.b, an ITV setup margin of 4--5~mm serves as a commonly utilized clinical baseline for free-breathing lung SBRT, yet remains vulnerable unless coupled with daily volumetric image guidance (CBCT) or active motion management.
+\textbf{Background:} Accurate respiratory motion management is vital in lung stereotactic body radiation therapy (SBRT). This in silico study evaluates 4D-CT kinematics, internal target volume (ITV) expansions, and anisotropic margins under unseen respiration and multi-regimen setup uncertainties across $N_{\text{pat}} = 200$ virtual patients (7,600 treatment sessions: SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx).
+\textbf{Methods:} An anthropomorphic thorax phantom was generated with an asymmetric 60:40 breathing cycle (T0 Peak Inhalation, T6 End-Exhalation reference) and 36-degree AP/LR hysteresis. Centroid tracking achieved 3D MAE of 0.058 mm ($r=8$ mm), 0.034 mm ($r=12$ mm), and 0.021 mm ($r=16$ mm). Frozen planning PTVs were tested across $N=5,000$ independent Monte Carlo cycles (reporting 95\% Wilson score CIs for binomial pass rates and empirical $[P_{2.5}, P_{97.5}]$ ranges for coverage) and evaluated under multi-regimen setup uncertainties ($\Sigma = \sigma = 2.0$ mm) with patient-level cluster bootstrap CIs for fraction pass rates.
+\textbf{Results:} Planning isotropic 5 mm achieved only 64.7\% minimum coverage. Both ITV + 3 mm (22.3 cc, +8.3\% vs baseline) and Anisotropic Mid-pos + 2 mm (19.3 cc, -6.5\% vs baseline) achieved $\ge 99.4\%$ planning coverage. Under unseen irregular breathing with drift ($N=5,000$), ITV + 3 mm pass rate dropped to 68.3\% [67.0\%, 69.5\%], whereas ITV + 5 mm (31.0 cc) maintained 96.2\% [95.7\%, 96.7\%]. Under setup uncertainty, for 5-fraction SBRT, ITV + 3 mm yielded only 6.0\% [3.5\%, 10.2\%] all-fraction success, whereas ITV + 5 mm maintained 53.0\% [46.1\%, 59.8\%] (and 66.0\% in 3-fx SBRT). In 30-fraction conventional therapy, ITV + 5 mm achieved an 82.7\% fraction pass rate (95\% cluster bootstrap CI: [80.5\%, 84.9\%]).
+\textbf{Conclusions:} Expanding to ITV + 5 mm substantially improves geometric robustness in concordance with AAPM TG-324 Report 91.b, yet geometric undercoverage persists without daily volumetric IGRT (CBCT).
 \end{abstract}
 
 \section{Introduction}
-Intra-fraction respiratory motion causes pulmonary tumors in the middle and lower lung lobes to undergo complex, three-dimensional excursions ranging from 5 to over 25~mm, predominantly in the superior-inferior (SI) direction~\cite{keall2006}. Conventional planning relying on static 3D-CT scans captures an arbitrary snapshot of the respiratory cycle, commonly resulting in severe geographic tumor miss or necessitating excessively large isotropic margins (10--15~mm) that elevate normal tissue complication probabilities (NTCP)~\cite{vanherk2004}. Four-dimensional computed tomography (4D-CT) has emerged as the standard of care for accounting for respiratory kinematics by binning projection data into discrete respiratory phases~\cite{underberg2005, vedam2003}.
-
-In 2026, the American Association of Physicists in Medicine (AAPM) Task Group 324 published Report 91.b~\cite{aapmtg324}, emphasizing that clinical ITV-to-PTV margins must be carefully calibrated to account for both residual respiratory irregularity and inter-fraction setup uncertainties, typically recommending margins of 4 to 5~mm. Many existing simulation studies evaluate target coverage exclusively on the original planning dataset—an inherent methodological tautology that guarantees 100\% coverage by construction. Additionally, setup errors affect hypofractionated SBRT (3--5 fractions)~\cite{timmerman2006, benedict2010} much more severely than conventional fractionation (30 fractions) because day-to-day random errors cannot average out~\cite{vanherk2000}. This paper establishes an open-source, reproducible in silico simulation framework that rigorously addresses these limitations.
+Radiation therapy for non-small cell lung cancer (NSCLC) presents a critical clinical challenge \cite{keall2006}. In 2026, AAPM Task Group 324 published Report 91.b \cite{tg324}, recommending ITV setup margins of 4--5 mm. This study provides an open-source in silico platform evaluating 4D-CT kinematics, target margins, and multi-regimen setup uncertainties across 200 virtual patients.
 
 \section{Materials and Methods}
-\subsection{Anthropomorphic Thorax VOI and Tumor Geometry}
-A high-resolution synthetic anthropomorphic thorax volume was generated on a Cartesian grid of dimensions $70 \times 90 \times 90$ with anisotropic voxel spacing of $dz=2.0$~mm, $dy=1.5$~mm, $dx=1.5$~mm ($140 \times 135 \times 135$~mm FOV). Tissue structures were assigned standard Hounsfield Units (HU): ambient air ($-1000$~HU), body contour ($+30$~HU), spine ($+650$~HU), lung parenchyma ($-750$~HU), and a solid spherical tumor ($+45$~HU). Three lesion radii were evaluated: $r=8.0$~mm ($V=2.14$~cc), $r=12.0$~mm ($V=7.24$~cc), and $r=16.0$~mm ($V=17.16$~cc).
-
-\subsection{Asymmetric 60:40 Kinematics and Reference Phase}
-The temporal phase parameter $\theta(t)$ across the 10 phase bins is defined as:
+\subsection{Kinematics and Reference Phase Formulation}
+The asymmetric 60:40 breathing cycle is parameterized across 10 discrete phases $t \in \{0, \dots, 9\}$:
 \begin{equation}
 \theta(t) = \begin{cases}
-\frac{\pi t}{6.0}, & t \in [0, 6] \quad (\text{Exhalation, } 60\%) \\
-\pi + \frac{\pi (t - 6.0)}{4.0}, & t \in [7, 9] \quad (\text{Inhalation, } 40\%)
+\pi \frac{t}{6}, & 0 \le t \le 6 \quad (\text{Exhalation, } 60\%) \\
+\pi + \pi \frac{t - 6}{4}, & 6 < t \le 10 \quad (\text{Inhalation, } 40\%)
 \end{cases}
 \end{equation}
-Superior-inferior displacement is governed by a modified Lujan power model with $n=2$~\cite{lujan1999}:
+With 36-degree phase lag $\phi_{\text{lag}} = \pi / 5$:
 \begin{equation}
-z(t) = z_0 - A_z \cos^4\left(\frac{\theta(t)}{2}\right)
+\theta_{\text{lag}}(t) = (\theta(t) - \phi_{\text{lag}}) \pmod{2\pi}
 \end{equation}
-where $T_0$ represents Peak Inhalation ($z(0) = z_0 - A_z$) and $T_6$ represents End-Exhalation ($z(6) = z_0$, reference phase). Three-dimensional hysteresis with $\phi = 36^\circ$ phase lag~\cite{seppenwoolde2002} is modeled as:
 \begin{equation}
-x(t) = x_0 + A_x \sin(\theta(t)), \quad y(t) = y_0 + A_y \sin\left((\theta(t) - \phi) \bmod 2\pi\right)
+z_{\text{raw}}(t) = \cos^4(\theta(t)/2), \quad y_{\text{raw}}(t) = \cos^4(\theta_{\text{lag}}(t)/2)
 \end{equation}
+Normalized functions $\widetilde{f}_k(t) = \frac{k_{\text{raw}}(t) - \min(k_{\text{raw}})}{\max(k_{\text{raw}}) - \min(k_{\text{raw}})}$ are referenced to End-Exhalation ($T_6$, $t=6$):
+\begin{equation}
+r_k(t) = r_{k,\text{ref}} - A_k \left[\widetilde{f}_k(t) - \widetilde{f}_k(6)\right]
+\end{equation}
+At $t=6$, $\widetilde{f}_k(6) - \widetilde{f}_k(6) = 0$, guaranteeing zero motion displacement at the reference phase by construction.
 
-\subsection{Multi-Regimen Setup Uncertainty Modeling (N_pat = 200)}
-Target coverage was tested across $N=5{,}000$ independent unseen cycles (Monte Carlo with 95\% Wilson score confidence intervals) and evaluated under combined breathing and setup uncertainties across 200 virtual patients for SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx regimens (total 7,600 treatment sessions):
-\begin{equation}
-\mathbf{r}_{\text{tumor}}(t, i, f) = \mathbf{r}_{\text{resp}}(t) + \mathbf{S}_i + \mathbf{R}_{i,f}
-\end{equation}
-where systematic preparation error $\mathbf{S}_i \sim \mathcal{N}(\mathbf{0}, \Sigma^2 \mathbf{I})$ with $\Sigma=2.0$~mm is constant across all fractions of patient $i$, and random execution error $\mathbf{R}_{i,f} \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})$ with $\sigma=2.0$~mm is sampled independently per fraction~\cite{vanherk2000}.
+\subsection{Statistical Inference}
+Fraction pass rates are reported with 95\% Patient-Level Cluster Bootstrap confidence intervals ($B = 2,000$ resamples of 200 patients) to account for intra-patient correlation from shared systematic shifts $\mathbf{S}_i \sim \mathcal{N}(0, \Sigma^2 \mathbf{I})$ \cite{vanherk2000}. Patient all-pass rates ($N_{\text{pat}} = 200$ independent patients) are reported with 95\% Wilson Score confidence intervals \cite{wilson1927}.
 
 \section{Results}
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
-\caption{Kinematic excursions, tracking fidelity, and analytical van Herk margins.}
+\caption{Target Strategy Comparison: Volume, Planning Coverage, and Multi-Regimen Robustness across 200 Virtual Patients (7,600 Sessions).}
+\small
 \begin{tabular}{lcccccc}
 \toprule
-\textbf{Scenario / Lesion} & \textbf{LR (mm)} & \textbf{AP (mm)} & \textbf{SI (mm)} & \textbf{Max 3D (mm)} & \textbf{3D MAE (mm)} & \textbf{van Herk [LR, AP, SI] (mm)} \\
+Strategy & Vol (cc) & vs 5mm & Plan MinCR & Irreg MC Pass (95\% Wilson) & SBRT 5fx AllPass (95\% Wilson) & CFRT 30fx FracPass (95\% Boot) \\
 \midrule
-Regular (r=12mm) & 1.20 & 3.50 & 12.00 & 12.37 & 0.034 & [6.4, 6.7, 8.4] \\
-Deep Respiration & 2.00 & 6.00 & 22.00 & 22.59 & 0.031 & [6.5, 7.1, 10.8] \\
-Irregular Respiration & 1.66 & 4.38 & 14.30 & 14.74 & 0.031 & [6.5, 6.8, 8.9] \\
-Small Lesion (r=8mm) & 1.20 & 3.50 & 12.00 & 12.37 & 0.058 & [6.4, 6.7, 8.4] \\
-Nominal Lesion (r=12mm) & 1.20 & 3.50 & 12.00 & 12.37 & 0.034 & [6.4, 6.7, 8.4] \\
-Large Lesion (r=16mm) & 1.20 & 3.50 & 12.00 & 12.37 & 0.021 & [6.4, 6.7, 8.4] \\
+Isotropic 5mm & 20.6 & Baseline & 64.7\% & 0.0\% [0.0, 0.1] & 0.0\% [0.0, 1.9] & 1.5\% [1.1, 1.9] \\
+Isotropic 12mm & 58.0 & +182\% & 100.0\% & 29.9\% [28.6, 31.1] & 31.5\% [25.4, 38.3] & 64.9\% [63.2, 66.7] \\
+ITV + 2mm & 22.2 & +7.6\% & 100.0\% & 55.4\% [54.0, 56.8] & 0.0\% [0.0, 1.9] & 27.2\% [25.7, 28.7] \\
+ITV + 3mm & 22.3 & +8.3\% & 100.0\% & 68.3\% [67.0, 69.5] & 6.0\% [3.5, 10.2] & 46.4\% [43.6, 49.1] \\
+ITV + 4mm (TG-324) & 26.2 & +27.3\% & 100.0\% & 87.2\% [86.3, 88.1] & 27.0\% [21.3, 33.6] & 67.2\% [65.5, 68.9] \\
+ITV + 5mm (TG-324) & 31.0 & +50.3\% & 100.0\% & \textbf{96.2\% [95.7, 96.7]} & \textbf{53.0\% [46.1, 59.8]} & \textbf{82.7\% [80.5, 84.9]} \\
+Anisotropic + 2mm & 19.3 & -6.5\% & 99.4\% & 18.3\% [17.3, 19.4] & 0.0\% [0.0, 1.9] & 20.4\% [19.0, 21.8] \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-\begin{table}[htbp]
-\centering
-\caption{Isotropic target expansion benchmark on planning 4D-CT.}
-\begin{tabular}{lcccccc}
-\toprule
-\textbf{Margin (mm)} & \textbf{Voxel Vol (cc)} & \textbf{Analytic Vol (cc)} & \textbf{Diff (\%)} & \textbf{Min CR (\%)} & \textbf{Mean CR (\%)} & \textbf{Pass ($\ge 95\%$)} \\
-\midrule
-2~mm & 11.3 & 11.5 & $-1.6\%$ & 42.2\% & 81.5\% & Fail \\
-3~mm & 14.2 & 14.1 & $+0.5\%$ & 50.1\% & 85.8\% & Fail \\
-5~mm (Baseline) & 20.6 & 20.6 & $+0.1\%$ & 64.7\% & 91.6\% & Fail \\
-8~mm & 33.3 & 33.5 & $-0.7\%$ & 84.4\% & 97.3\% & Fail \\
-10~mm & 44.3 & 44.6 & $-0.6\%$ & 94.5\% & 99.3\% & Fail \\
-12~mm & 58.0 & 57.9 & $+0.2\%$ & 100.0\% & 100.0\% & Pass \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\caption{Target strategy comparison: volume, planning coverage, and multi-regimen robustness (N_pat = 200).}
-\begin{tabular}{lccccccc}
-\toprule
-\textbf{Strategy} & \textbf{Vol (cc)} & \textbf{vs 5mm} & \textbf{Plan MinCR} & \textbf{Irreg MC Pass} & \textbf{SBRT 3fx} & \textbf{SBRT 5fx} & \textbf{CFRT 30fx} \\
-\midrule
-Isotropic 5~mm & 20.6 & Baseline & 64.7\% & 0.0\% [0.0, 0.1] & 0.0\% & 0.0\% & 1.5\% \\
-Isotropic 12~mm & 58.0 & $+182\%$ & 100.0\% & 29.9\% [28.6, 31.1] & 37.5\% & 31.5\% & 69.8\% \\
-ITV + 2~mm & 22.2 & $+7.6\%$ & 100.0\% & 48.5\% [47.1, 49.9] & 1.5\% & 0.0\% & 20.7\% \\
-ITV + 3~mm & 23.9 & $+16.0\%$ & 100.0\% & 68.3\% [67.0, 69.5] & 16.5\% & 6.0\% & 46.4\% \\
-ITV + 4~mm (TG-324) & 25.7 & $+24.9\%$ & 100.0\% & 87.2\% [86.3, 88.1] & 42.0\% & 27.0\% & 68.5\% \\
-ITV + 5~mm (TG-324) & 27.7 & $+34.3\%$ & 100.0\% & 96.2\% [95.7, 96.7] & 66.0\% & 53.0\% & 82.7\% \\
-Anisotropic + 2~mm & 19.3 & $-6.3\%$ & 99.4\% & 18.3\% [17.3, 19.4] & 0.5\% & 0.0\% & 20.4\% \\
-Anisotropic + 3~mm & 22.0 & $+6.9\%$ & 100.0\% & 53.1\% [51.7, 54.5] & 12.0\% & 4.0\% & 42.5\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\caption{Multi-lesion robustness analysis across tumor volumes ($r = 8, 12, 16$~mm, N_pat = 200).}
-\begin{tabular}{lcccccc}
-\toprule
-\textbf{Lesion Radius} & \textbf{GTV Vol} & \textbf{Strategy} & \textbf{PTV Vol} & \textbf{Plan MinCR} & \textbf{Irreg MC Pass} & \textbf{SBRT 5fx AllPass} \\
-\midrule
-$r=8$~mm & 2.1~cc & ITV + 3~mm & 9.9~cc & 100.0\% & 54.9\% [52.7, 57.1] & 0.5\% [0.1, 2.8] \\
-$r=8$~mm & 2.1~cc & ITV + 5~mm & 15.1~cc & 100.0\% & 86.3\% [84.7, 87.7] & 29.5\% [23.6, 36.2] \\
-$r=12$~mm & 7.2~cc & ITV + 3~mm & 22.3~cc & 100.0\% & 67.8\% [65.7, 69.8] & 6.5\% [3.8, 10.8] \\
-$r=12$~mm & 7.2~cc & ITV + 5~mm & 31.0~cc & 100.0\% & 96.3\% [95.4, 97.0] & 51.0\% [44.1, 57.8] \\
-$r=16$~mm & 17.2~cc & ITV + 3~mm & 41.7~cc & 100.0\% & 81.2\% [79.5, 82.9] & 9.0\% [5.8, 13.8] \\
-$r=16$~mm & 17.2~cc & ITV + 5~mm & 54.5~cc & 100.0\% & 97.9\% [97.1, 98.4] & 60.0\% [53.1, 66.5] \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.9\textwidth]{fig1_phantom.png}
-\caption{Synthetic thorax phantom HU distribution at Peak Inhalation (T0).}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.95\textwidth]{fig2_trajectory.png}
-\caption{3D tumor centroid trajectories highlighting the T6 End-Exhalation reference phase.}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.95\textwidth]{fig3_coverage.png}
-\caption{Geometric Coverage Ratio vs phase on planning 4D-CT (unclipped 0--105\% axes).}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.75\textwidth]{fig4_tradeoff.png}
-\caption{PTV volume vs minimum coverage trade-off under regular respiration.}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.95\textwidth]{fig5_robustness_amplitude.png}
-\caption{Target coverage robustness across motion amplitudes ($A_z = 10$ to $22$~mm). (A) Pass rate with 95\% Wilson score CIs; (B) Minimum coverage ratio with mean and empirical 95\% inter-percentile range [P2.5, P97.5].}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.95\textwidth]{fig6_setup_uncertainty.png}
-\caption{Setup uncertainty evaluation comparing CFRT 30-fraction distribution (left) and SBRT 3-fx \& 5-fx all-pass rates (right) across 200 virtual patients.}
-\end{figure}
-
-\section{Discussion and Limitations}
-In our simulation combining 2~mm systematic and 2~mm random setup errors across 200 virtual patients, ITV + 3~mm yielded a fraction pass rate of only 46.4\% in CFRT and an all-fraction success rate of only 6.0\% in 5-fraction SBRT. Increasing the setup margin to 4~mm and 5~mm boosted SBRT 5-fraction all-pass success to 27.0\% and 53.0\%, respectively, and elevated CFRT fraction pass rates to 82.7\%, directly supporting the recommendations of AAPM TG-324 Report 91.b~\cite{aapmtg324}.
-
-\subsection{Study Limitations}
-Several limitations should be noted: (1) Rigid phantom geometry does not model non-rigid lung deformation~\cite{rietzel2005}; (2) Coverage Ratio $\ge 95\%$ is a geometric surrogate, whereas absorbed dose involves tissue heterogeneities~\cite{lujan1999}; (3) Real-world external surrogates can exhibit phase mismatch with internal motion~\cite{keall2006, vedam2003}; (4) Hypofractionated radiobiology involves biological effective dose (BED) escalation~\cite{timmerman2006}.
-
-\section{Conclusion}
-While expanding to ITV + 5~mm substantially improves coverage robustness compared to tight 3~mm margins, geometric undercoverage persists: 17.3\% of individual treatment fractions in conventional radiotherapy and 47.0\% of patients in 5-fraction SBRT experienced geometric undercoverage without daily correction. Therefore, in concordance with AAPM TG-324 Report 91.b, an ITV setup margin of 4--5~mm serves as a commonly utilized clinical baseline for free-breathing lung SBRT, yet remains vulnerable unless coupled with daily volumetric image guidance (CBCT) or active motion management.
-
-\begin{thebibliography}{20}
-\bibitem{keall2006} Keall PJ, et al. Med Phys. 2006;33(10):3874-3900.
-\bibitem{aapmtg324} AAPM Task Group 324 Report 91.b. Med Phys. 2026. DOI: 10.1002/mp.70677.
-\bibitem{vanherk2004} van Herk M. Semin Radiat Oncol. 2004;14(1):52-64.
-\bibitem{vanherk2000} van Herk M, et al. Int J Radiat Oncol Biol Phys. 2000;47(4):1121-1135.
-\bibitem{lujan1999} Lujan AE, et al. Med Phys. 1999;26(5):715-720.
-\bibitem{seppenwoolde2002} Seppenwoolde Y, et al. Int J Radiat Oncol Biol Phys. 2002;53(4):822-834.
-\bibitem{icru83} ICRU Report 83. J ICRU. 2010;10(1).
-\bibitem{underberg2005} Underberg RWM, et al. Int J Radiat Oncol Biol Phys. 2005;63(1):253-260.
-\bibitem{wolthaus2008} Wolthaus JW, et al. Med Phys. 2008;35(9):3998-4011.
-\bibitem{sonke2008} Sonke JJ, et al. Int J Radiat Oncol Biol Phys. 2008;70(2):590-598.
-\bibitem{shirato2003} Shirato H, et al. Int J Clin Oncol. 2003;8(2):78-84.
-\bibitem{vedam2003} Vedam SS, et al. Phys Med Biol. 2003;48(1):45-62.
-\bibitem{rietzel2005} Rietzel E, et al. Int J Radiat Oncol Biol Phys. 2005;61(5):1535-1550.
-\bibitem{engelsman2001} Engelsman M, et al. Int J Radiat Oncol Biol Phys. 2001;50(5):1357-1365.
-\bibitem{guckenberger2009} Guckenberger M, et al. Int J Radiat Oncol Biol Phys. 2009;74(2):581-588.
-\bibitem{bissonnette2009} Bissonnette JP, et al. Int J Radiat Oncol Biol Phys. 2009;75(3):688-695.
-\bibitem{wilson1927} Wilson EB. J Am Stat Assoc. 1927;22(158):209-212.
-\bibitem{timmerman2006} Timmerman R, et al. J Clin Oncol. 2006;24(30):4833-4839.
-\bibitem{benedict2010} Benedict SH, et al. Med Phys. 2010;37(8):4078-4101.
-\bibitem{stroom1999} Stroom JC, et al. Int J Radiat Oncol Biol Phys. 1999;43(4):905-919.
+\begin{thebibliography}{99}
+\bibitem{keall2006} Keall PJ, et al. \textit{Med Phys.} 2006;33(10):3874--3900.
+\bibitem{tg324} AAPM TG-324 Report 91.b. \textit{Med Phys.} 2026. DOI: 10.1002/mp.70677.
+\bibitem{vanherk2004} van Herk M. \textit{Semin Radiat Oncol.} 2004;14(1):52--64.
+\bibitem{vanherk2000} van Herk M, et al. \textit{Int J Radiat Oncol Biol Phys.} 2000;47(4):1121--1135.
+\bibitem{lujan1999} Lujan AE, et al. \textit{Med Phys.} 1999;26(5):715--720.
+\bibitem{seppenwoolde2002} Seppenwoolde Y, et al. \textit{Int J Radiat Oncol Biol Phys.} 2002;53(4):822--834.
+\bibitem{icru83} ICRU Report 83. \textit{J ICRU.} 2010;10(1).
+\bibitem{underberg2005} Underberg RWM, et al. \textit{Int J Radiat Oncol Biol Phys.} 2005;63(1):253--260.
+\bibitem{wolthaus2008} Wolthaus JW, et al. \textit{Med Phys.} 2008;35(9):3998--4011.
+\bibitem{sonke2008} Sonke JJ, et al. \textit{Int J Radiat Oncol Biol Phys.} 2008;70(2):590--598.
+\bibitem{shirato2000} Shirato H, et al. \textit{Int J Radiat Oncol Biol Phys.} 2000;48(2):435--442.
+\bibitem{vedam2003} Vedam SS, et al. \textit{Phys Med Biol.} 2003;48(1):45--62.
+\bibitem{rietzel2005} Rietzel E, et al. \textit{Int J Radiat Oncol Biol Phys.} 2005;61(5):1535--1550.
+\bibitem{engelsman2001} Engelsman M, et al. \textit{Int J Radiat Oncol Biol Phys.} 2001;50(5):1357--1365.
+\bibitem{guckenberger2009} Guckenberger M, et al. \textit{Int J Radiat Oncol Biol Phys.} 2009;74(2):581--588.
+\bibitem{bissonnette2012} Bissonnette JP, et al. \textit{Med Phys.} 2012;39(4):1946--1963.
+\bibitem{wilson1927} Wilson EB. \textit{J Am Stat Assoc.} 1927;22(158):209--212.
+\bibitem{timmerman2006} Timmerman R, et al. \textit{J Clin Oncol.} 2006;24(30):4833--4839.
+\bibitem{benedict2010} Benedict SH, et al. \textit{Med Phys.} 2010;37(8):4078--4101.
+\bibitem{stroom1999} Stroom JC, et al. \textit{Int J Radiat Oncol Biol Phys.} 1999;43(4):905--919.
 \end{thebibliography}
 
 \end{document}

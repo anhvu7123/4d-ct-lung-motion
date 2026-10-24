@@ -9,7 +9,25 @@
       1.5
     ],
     "nominal_tumor_radius_mm": 12.0,
-    "virtual_patients": 200
+    "sample_sizes": {
+      "main_mc_unseen_cycles": 5000,
+      "multi_lesion_mc_cycles": 2000,
+      "setup_virtual_patients": 200,
+      "sbrt_3fx_sessions": 600,
+      "sbrt_5fx_sessions": 1000,
+      "cfrt_30fx_sessions": 6000,
+      "total_sessions": 7600
+    },
+    "mc_distributions": {
+      "irregular_amplitude_z": "max(6.0, N(14.5, 1.5^2)) mm",
+      "irregular_amplitude_y": "max(1.5, N(4.2, 0.5^2)) mm",
+      "irregular_amplitude_x": "max(0.5, N(1.6, 0.2^2)) mm",
+      "baseline_drift_z": "N(0, 1.5^2) mm",
+      "baseline_drift_y": "N(0, 0.6^2) mm",
+      "baseline_drift_x": "N(0, 0.3^2) mm",
+      "setup_systematic_Sigma": "2.0 mm",
+      "setup_random_sigma": "2.0 mm"
+    }
   },
   "multi_radii": {
     "r_8mm": {
@@ -67,7 +85,11 @@
             0.09,
             2.78
           ],
-          "sbrt5_frac_pass_pct": 33.2
+          "sbrt5_frac_pass_pct": 33.2,
+          "sbrt5_frac_pass_cluster_boot_ci_95": [
+            29.8,
+            36.5
+          ]
         },
         "ITV + 5mm setup": {
           "ptv_volume_cc": 15.12,
@@ -82,7 +104,11 @@
             23.61,
             36.16
           ],
-          "sbrt5_frac_pass_pct": 73.8
+          "sbrt5_frac_pass_pct": 73.8,
+          "sbrt5_frac_pass_cluster_boot_ci_95": [
+            70.4,
+            77.1
+          ]
         }
       }
     },
@@ -103,7 +129,11 @@
             3.84,
             10.8
           ],
-          "sbrt5_frac_pass_pct": 45.800000000000004
+          "sbrt5_frac_pass_pct": 45.800000000000004,
+          "sbrt5_frac_pass_cluster_boot_ci_95": [
+            41.8,
+            49.7
+          ]
         },
         "ITV + 5mm setup": {
           "ptv_volume_cc": 30.964499999999997,
@@ -118,7 +148,11 @@
             44.12,
             57.84
           ],
-          "sbrt5_frac_pass_pct": 84.3
+          "sbrt5_frac_pass_pct": 84.3,
+          "sbrt5_frac_pass_cluster_boot_ci_95": [
+            81.4,
+            87.1
+          ]
         }
       }
     },
@@ -139,7 +173,11 @@
             5.77,
             13.78
           ],
-          "sbrt5_frac_pass_pct": 53.7
+          "sbrt5_frac_pass_pct": 53.7,
+          "sbrt5_frac_pass_cluster_boot_ci_95": [
+            49.9,
+            57.4
+          ]
         },
         "ITV + 5mm setup": {
           "ptv_volume_cc": 54.5355,
@@ -154,7 +192,11 @@
             53.08,
             66.54
           ],
-          "sbrt5_frac_pass_pct": 88.0
+          "sbrt5_frac_pass_pct": 88.0,
+          "sbrt5_frac_pass_cluster_boot_ci_95": [
+            85.5,
+            90.3
+          ]
         }
       }
     }
@@ -2765,6 +2807,10 @@
           0.46,
           2.16
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          0.33,
+          1.84
+        ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
           0.0,
@@ -3088,6 +3134,10 @@
         "fraction_pass_wilson_ci_95": [
           59.74,
           67.42
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          58.66,
+          68.83
         ],
         "patient_all_fraction_success_pct": 37.5,
         "patient_all_pass_wilson_ci_95": [
@@ -3413,6 +3463,10 @@
           20.91,
           27.75
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          20.67,
+          27.67
+        ],
         "patient_all_fraction_success_pct": 1.5,
         "patient_all_pass_wilson_ci_95": [
           0.51,
@@ -3736,6 +3790,10 @@
         "fraction_pass_wilson_ci_95": [
           47.34,
           55.31
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          47.33,
+          55.5
         ],
         "patient_all_fraction_success_pct": 16.5,
         "patient_all_pass_wilson_ci_95": [
@@ -4061,6 +4119,10 @@
           69.31,
           76.4
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          69.33,
+          76.67
+        ],
         "patient_all_fraction_success_pct": 42.0,
         "patient_all_pass_wilson_ci_95": [
           35.37,
@@ -4384,6 +4446,10 @@
         "fraction_pass_wilson_ci_95": [
           82.81,
           88.4
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          82.67,
+          88.83
         ],
         "patient_all_fraction_success_pct": 66.0,
         "patient_all_pass_wilson_ci_95": [
@@ -4709,6 +4775,10 @@
           15.44,
           21.63
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          14.83,
+          21.67
+        ],
         "patient_all_fraction_success_pct": 0.5,
         "patient_all_pass_wilson_ci_95": [
           0.09,
@@ -5032,6 +5102,10 @@
         "fraction_pass_wilson_ci_95": [
           38.44,
           46.32
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          38.0,
+          46.67
         ],
         "patient_all_fraction_success_pct": 12.0,
         "patient_all_pass_wilson_ci_95": [
@@ -5359,6 +5433,10 @@
           0.62,
           1.96
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          0.4,
+          1.9
+        ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
           0.0,
@@ -5682,6 +5760,10 @@
         "fraction_pass_wilson_ci_95": [
           65.55,
           71.3
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          64.3,
+          72.3
         ],
         "patient_all_fraction_success_pct": 31.5,
         "patient_all_pass_wilson_ci_95": [
@@ -6007,6 +6089,10 @@
           18.21,
           23.22
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          17.7,
+          23.7
+        ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
           0.0,
@@ -6330,6 +6416,10 @@
         "fraction_pass_wilson_ci_95": [
           43.73,
           49.9
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          42.8,
+          50.9
         ],
         "patient_all_fraction_success_pct": 6.0,
         "patient_all_pass_wilson_ci_95": [
@@ -6655,6 +6745,10 @@
           67.19,
           72.86
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          66.4,
+          73.7
+        ],
         "patient_all_fraction_success_pct": 27.0,
         "patient_all_pass_wilson_ci_95": [
           21.32,
@@ -6978,6 +7072,10 @@
         "fraction_pass_wilson_ci_95": [
           82.13,
           86.61
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          81.5,
+          87.3
         ],
         "patient_all_fraction_success_pct": 53.0,
         "patient_all_pass_wilson_ci_95": [
@@ -7303,6 +7401,10 @@
           17.16,
           22.07
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          16.6,
+          22.5
+        ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
           0.0,
@@ -7626,6 +7728,10 @@
         "fraction_pass_wilson_ci_95": [
           38.98,
           45.08
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          38.1,
+          46.1
         ],
         "patient_all_fraction_success_pct": 4.0,
         "patient_all_pass_wilson_ci_95": [
@@ -7953,6 +8059,10 @@
           1.19,
           1.8
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          1.07,
+          1.93
+        ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
           0.0,
@@ -8276,6 +8386,10 @@
         "fraction_pass_wilson_ci_95": [
           68.63,
           70.95
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          66.35,
+          73.12
         ],
         "patient_all_fraction_success_pct": 7.5,
         "patient_all_pass_wilson_ci_95": [
@@ -8601,6 +8715,10 @@
           19.68,
           21.73
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          18.98,
+          22.47
+        ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
           0.0,
@@ -8924,6 +9042,10 @@
         "fraction_pass_wilson_ci_95": [
           45.16,
           47.68
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          43.63,
+          49.13
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -9249,6 +9371,10 @@
           67.36,
           69.71
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          65.72,
+          71.28
+        ],
         "patient_all_fraction_success_pct": 0.5,
         "patient_all_pass_wilson_ci_95": [
           0.09,
@@ -9572,6 +9698,10 @@
         "fraction_pass_wilson_ci_95": [
           81.74,
           83.65
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          80.48,
+          84.88
         ],
         "patient_all_fraction_success_pct": 6.5,
         "patient_all_pass_wilson_ci_95": [
@@ -9897,6 +10027,10 @@
           19.42,
           21.46
         ],
+        "fraction_pass_cluster_boot_ci_95": [
+          18.57,
+          22.25
+        ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
           0.0,
@@ -10220,6 +10354,10 @@
         "fraction_pass_wilson_ci_95": [
           41.27,
           43.77
+        ],
+        "fraction_pass_cluster_boot_ci_95": [
+          39.78,
+          45.35
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [

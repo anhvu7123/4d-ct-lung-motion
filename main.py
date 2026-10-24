@@ -54,6 +54,23 @@ def wilson_score_interval(p_pct, n, z=1.95996398454):
     upper = min(1.0, center + margin) * 100.0
     return round(float(lower), 2), round(float(upper), 2)
 
+def patient_cluster_bootstrap_ci(patient_passes, n_fractions, n_boot=2000, alpha=0.05, seed=42):
+    """
+    Patient-level cluster bootstrap confidence interval for fraction pass rate.
+    Resamples patient clusters with replacement (B=n_boot) to account for intra-patient correlation
+    induced by shared systematic setup shifts S_i.
+    """
+    rng = np.random.RandomState(seed)
+    n_patients = len(patient_passes)
+    # Resample patient indices: shape (n_boot, n_patients)
+    boot_indices = rng.choice(n_patients, size=(n_boot, n_patients), replace=True)
+    # Sum fraction successes per bootstrap replicate
+    boot_successes = np.take(patient_passes, boot_indices).sum(axis=1)
+    boot_rates = (boot_successes / (n_patients * n_fractions)) * 100.0
+    low = np.percentile(boot_rates, 100.0 * (alpha / 2.0))
+    high = np.percentile(boot_rates, 100.0 * (1.0 - alpha / 2.0))
+    return [round(float(low), 2), round(float(high), 2)]
+
 def generate_dynamic_phantom(scenario='regular', tumor_radius=12.0, nz=70, ny=90, nx=90, dz=2.0, dy=1.5, dx=1.5):
     """
     Generate a 10-phase 4D-CT synthetic thorax Volume of Interest (T, Z, Y, X) in Hounsfield Units (HU).
@@ -466,6 +483,7 @@ def evaluate_multi_tumor_robustness(spacing, grid_shape, base_pos, n_mc=2000, n_
             np.random.seed(seed + 1)
             p_passes_5fx = 0
             f_passes_5fx = 0
+            p_f_passes = np.zeros(n_patients)
             for p in range(n_patients):
                 S = np.random.normal(0, 2.0, size=3)
                 p_ok = True
@@ -479,6 +497,7 @@ def evaluate_multi_tumor_robustness(spacing, grid_shape, base_pos, n_mc=2000, n_
                     crs = evaluate_fast_cr(mask, traj, rel_vox_r, spacing, grid_shape)
                     if np.min(crs) >= 95.0:
                         f_passes_5fx += 1
+                        p_f_passes[p] += 1
                     else:
                         p_ok = False
                 if p_ok:
@@ -487,6 +506,7 @@ def evaluate_multi_tumor_robustness(spacing, grid_shape, base_pos, n_mc=2000, n_
             sbrt5_all_pass = (p_passes_5fx / n_patients) * 100.0
             sbrt5_ci = wilson_score_interval(sbrt5_all_pass, n_patients)
             sbrt5_frac_pass = (f_passes_5fx / (n_patients * 5)) * 100.0
+            sbrt5_frac_cluster_ci = patient_cluster_bootstrap_ci(p_f_passes, 5, n_boot=2000, seed=seed+3)
 
             r_eval[target] = {
                 'ptv_volume_cc': ptv_vol,
@@ -495,7 +515,8 @@ def evaluate_multi_tumor_robustness(spacing, grid_shape, base_pos, n_mc=2000, n_
                 'mc_irreg_wilson_ci_95': mc_ci,
                 'sbrt5_all_pass_pct': sbrt5_all_pass,
                 'sbrt5_all_pass_wilson_ci_95': sbrt5_ci,
-                'sbrt5_frac_pass_pct': sbrt5_frac_pass
+                'sbrt5_frac_pass_pct': sbrt5_frac_pass,
+                'sbrt5_frac_pass_cluster_boot_ci_95': sbrt5_frac_cluster_ci
             }
 
         key = f"r_{int(r)}mm"
@@ -672,6 +693,7 @@ def simulate_regimen(strategies, rel_vox_coords, spacing, grid_shape, base_pos,
 
         all_pass_pct = float(np.mean(p_passes == n_fractions) * 100.0)
         course_pass_pct = float(np.mean((p_passes / n_fractions) >= 0.90) * 100.0)
+        f_boot_ci = patient_cluster_bootstrap_ci(p_passes, n_fractions, n_boot=2000, seed=seed+10)
 
         results[k] = {
             'n_patients': n_patients,
@@ -681,6 +703,7 @@ def simulate_regimen(strategies, rel_vox_coords, spacing, grid_shape, base_pos,
             'std_fraction_cr': float(np.std(f_arr)),
             'fraction_pass_rate_pct': f_pass_pct,
             'fraction_pass_wilson_ci_95': wilson_score_interval(f_pass_pct, total_fractions),
+            'fraction_pass_cluster_boot_ci_95': f_boot_ci,
             'patient_all_fraction_success_pct': all_pass_pct,
             'patient_all_pass_wilson_ci_95': wilson_score_interval(all_pass_pct, n_patients),
             'patient_course_avg_success_pct': course_pass_pct,
@@ -1079,7 +1102,25 @@ def run_experiment():
         'cycle_ratio': '60:40',
         'voxel_spacing_mm': [dz, dy, dx],
         'nominal_tumor_radius_mm': 12.0,
-        'virtual_patients': 200
+        'sample_sizes': {
+            'main_mc_unseen_cycles': 5000,
+            'multi_lesion_mc_cycles': 2000,
+            'setup_virtual_patients': 200,
+            'sbrt_3fx_sessions': 600,
+            'sbrt_5fx_sessions': 1000,
+            'cfrt_30fx_sessions': 6000,
+            'total_sessions': 7600
+        },
+        'mc_distributions': {
+            'irregular_amplitude_z': 'max(6.0, N(14.5, 1.5^2)) mm',
+            'irregular_amplitude_y': 'max(1.5, N(4.2, 0.5^2)) mm',
+            'irregular_amplitude_x': 'max(0.5, N(1.6, 0.2^2)) mm',
+            'baseline_drift_z': 'N(0, 1.5^2) mm',
+            'baseline_drift_y': 'N(0, 0.6^2) mm',
+            'baseline_drift_x': 'N(0, 0.3^2) mm',
+            'setup_systematic_Sigma': '2.0 mm',
+            'setup_random_sigma': '2.0 mm'
+        }
     }}
 
     # 1. Multi-Lesion Sensitivity Analysis
