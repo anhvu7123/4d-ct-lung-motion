@@ -2,268 +2,112 @@
 \usepackage[utf8]{inputenc}
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
-\usepackage{booktabs}
-\usepackage{cite}
-\usepackage{hyperref}
 \usepackage{graphicx}
-\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{caption}
 
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue,
-    citecolor=blue,
-    urlcolor=blue
-}
-
-\title{\textbf{In Silico 4D-CT-Based Tumor Motion Modeling and Quantitative Evaluation of PTV Margins for Lung Radiotherapy Planning}}
-
-\author{
-    \textbf{Vu Minh Anh}\thanks{Corresponding author: \texttt{mvu103536@gmail.com}} \\
-    \small Faculty of Information Technology, Ho Chi Minh City University of Industry and Trade (HUIT), \\
-    \small Ho Chi Minh City, Vietnam
-}
-\date{October 23, 2026}
+\title{\textbf{In Silico Evaluation of 4D-CT Lung Tumor Kinematics, Target Margin Strategies, and Coverage Robustness Under Respiratory Variations and Setup Uncertainties}}
+\author{\textbf{Vu Minh Anh}\\
+\small Faculty of Information Technology, Ho Chi Minh City University of Industry and Trade (HUIT)\\
+\small Ho Chi Minh City, Vietnam \quad Email: \texttt{anhvm@huit.edu.vn}}
+\date{October 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Target motion during thoracic external beam radiotherapy induces spatial misalignment between planned radiation apertures and mobile tumor volumes. While commercial treatment planning systems (TPS) offer sophisticated tools, uniform isotropic planning target volume (PTV) margin expansions remain widely utilized in standard clinical workflows due to practical simplicity. In this in silico investigation, we developed an open-source computational Python pipeline to track 3D tumor centroids across ten-phase 4D-CT volumes and quantitatively evaluate PTV margin strategies using a calibrated synthetic digital thorax phantom. A spatiotemporal volume of interest (VOI, $140 \times 135 \times 135\text{ mm}^3$, voxel lattice $2.0 \times 1.5 \times 1.5\text{ mm}^3$) was formulated across phases T0 to T9. Respiration kinematics incorporated an asymmetric 60:40 exhalation:inhalation dwell ratio, a generalized Lujan model with power coefficient $n=2$, and phase-lag hysteresis ($\phi = 36^\circ$) between craniocaudal and anteroposterior trajectories. Phase T4 was designated as the end-exhalation reference, where the cosine-power model reaches its displacement minimum ($\cos^4(\pi/2) = 0$). Lesion volumes were segmented via automated 4-step thresholding with 3D morphological hole-filling, achieving sub-voxel centroid tracking accuracy (3D Mean Absolute Error $\text{MAE} < 0.035\text{ mm}$ vs. analytical ground truth). We evaluated three margin design strategies: (1) uniform isotropic expansions ($2$ to $12\text{ mm}$); (2) internal target volume (ITV) plus isotropic setup margins ($2$ to $5\text{ mm}$); and (3) mid-position-based anisotropic PTV margins. Target coverage rates (CR) were benchmarked against the analytical van Herk population recipe ($M = 2.5\Sigma + 0.7\sigma$) and ICRU geometric consensus criteria ($\text{CR}_{\min} \ge 95\%$). Peak-to-peak excursions were dominated by craniocaudal motion: $12.00\text{ mm}$ (regular), $22.00\text{ mm}$ (deep), and $14.67 \pm 1.14\text{ mm}$ (irregular, Monte Carlo $N=100$). The van Herk formula predicted required craniocaudal margins of $8.37\text{ mm}$ (regular) and $10.78\text{ mm}$ (deep)---substantially larger than the clinical $5\text{ mm}$ margin, consistent with the observed empirical CR failure ($\text{CR}_{\min} = 64.8\%$ regular, $12.1\%$ deep). A $12\text{ mm}$ isotropic expansion restored coverage ($\text{CR}_{\min} = 100\%$ in regular) but inflated PTV volume by $+182\%$ (from $20.6$ to $58.0\text{ cc}$). In contrast, an ITV with a $3\text{ mm}$ setup margin ($23.9\text{ cc}$) achieved $\text{CR}_{\min} = 100\%$ under both regular and deep breathing. An anisotropic PTV ($19.3\text{ cc}$) achieved $\text{CR}_{\min} = 98.6\%$ under regular breathing; however, under deep breathing ($A_z = 22\text{ mm}$), $\text{CR}_{\min} = 89.0\%$, falling below the $95\%$ threshold---suggesting ITV-based planning is superior for large-amplitude respiratory motion. Both motion-adapted strategies reduced PTV volume by $59\%$ to $67\%$ compared to the $12\text{ mm}$ buffer (a geometric proxy for normal tissue dose reduction; 4D dose accumulation is needed to confirm dosimetric benefit). These findings provide computational confirmation that uniform 3D margins are geometrically suboptimal for mobile lung tumors with excursion $>5\text{ mm}$, supporting 4D-CT ITV planning in accordance with AAPM Task Group 76 guidelines.
-
-\vspace{0.5em}
-\noindent\textbf{Keywords:} 4D-CT, Lung Radiotherapy, Intrafraction Motion, In Silico Modeling, Centroid Tracking, PTV Margins, van Herk Recipe, AAPM TG-76.
+\noindent\textbf{Background:} Accurate management of respiratory motion remains a critical challenge in stereotactic body radiation therapy (SBRT) for lung cancer. Conventional static 3D-CT expansions frequently either underdose moving tumors or unnecessarily irradiate healthy lung parenchyma. This study presents a comprehensive in silico framework evaluating 4D-CT respiratory kinematics, internal target volume (ITV) expansions, and anisotropic margins, with rigorous robustness testing under unseen breathing cycles and setup uncertainties.\\
+\textbf{Methods:} A 10-phase synthetic thorax phantom was constructed incorporating an asymmetric 60:40 breathing cycle (60\% exhalation across $T_0 \to T_6$; 40\% inhalation across $T_6 \to T_0$; $T_6$ designated as end-exhalation reference) with Lujan $n=2$ resting dwell and $36^\circ$ AP/LR hysteresis. Three lesion sizes ($r=8, 12, 16$~mm) and three motion profiles were evaluated. Frozen planning PTVs were tested across $N=5{,}000$ independent unseen cycles (Monte Carlo, 95\% CI) and evaluated under combined breathing and setup uncertainties (50 patients $\times$ 30 fractions = 1,500 treatment sessions with 2~mm systematic and 2~mm random errors) aligned with AAPM TG-324 Report 91.b.\\
+\textbf{Results:} Automated centroid tracking achieved 3D MAE of 0.058~mm, 0.034~mm, and 0.021~mm for 8~mm, 12~mm, and 16~mm lesions. Conventional 5~mm isotropic expansion achieved only 64.7\% planning minimum coverage. Both ITV + 3~mm (23.9~cc) and Anisotropic + 2~mm (19.3~cc, $-6.3\%$ volume vs. 5~mm isotropic baseline) achieved $\ge 99.4\%$ planning coverage. However, under irregular breathing with baseline drift, ITV + 3~mm pass rate dropped to 87.1\% (mean min CR: 97.6\%, 95\% CI: [86.5\%, 100.0\%]), whereas ITV + 5~mm maintained a 97.9\% pass rate (mean min CR: 99.7\%, 95\% CI: [97.8\%, 100.0\%]). Under setup uncertainty (1,500 fractions), ITV + 3~mm yielded a 56.5\% fraction pass rate (6.0\% patient success rate), while ITV + 5~mm achieved an 86.5\% fraction pass rate (52.0\% patient success rate).\\
+\textbf{Conclusions:} While anisotropic and tight ITV margins provide geometric sparing under idealized regular breathing, they exhibit substantial coverage degradation in the presence of realistic setup errors and baseline drift. In concordance with AAPM TG-324, an ITV setup margin of 4--5~mm is clinically required for free-breathing lung SBRT.
 \end{abstract}
 
 \section{Introduction}
-Geometric accuracy in thoracic external beam radiotherapy is fundamentally compromised by intrafractional respiratory motion. Contraction of the diaphragm and rhythmic chest wall excursions induce substantial time-dependent displacements of lung parenchyma and embedded lesions. As detailed in the American Association of Physicists in Medicine (AAPM) Task Group 76 report \cite{keall2006management}, tumor motion exceeding $5\text{ mm}$ along any Cartesian axis warrants explicit motion management to mitigate normal tissue toxicity and prevent target underdosing. In stereotactic body radiation therapy (SBRT), where ablative fractional doses often exceed $10\text{ Gy}$, unmanaged target displacement leads to steep dosimetric penalties at beam boundaries \cite{benedict2010stereotactic, timmerman2008overview}.
+Intra-fraction respiratory motion causes pulmonary tumors in the middle and lower lung lobes to undergo complex, three-dimensional excursions ranging from 5 to over 25~mm, predominantly in the superior-inferior (SI) direction. Conventional planning relying on static 3D-CT scans captures an arbitrary snapshot of the respiratory cycle, commonly resulting in severe geographic tumor miss or necessitating excessively large isotropic margins (10--15~mm) that elevate normal tissue complication probabilities (NTCP)~\cite{keall2006}. Four-dimensional computed tomography (4D-CT) has emerged as the standard of care for accounting for respiratory kinematics by binning projection data into discrete respiratory phases~\cite{underberg2005}.
 
-Conventional static three-dimensional computed tomography (3D-CT) acquisition captures an arbitrary snapshot of breathing anatomy, resulting in motion-blurring artifacts, artificial volume distortion, and significant misestimation of gross tumor volume (GTV) boundaries \cite{shimizu2000impact, stevens2001respiratory}. Four-dimensional computed tomography (4D-CT) resolves this temporal ambiguity by sorting projection data into discrete respiratory phase bins (typically 10 phases from peak inhalation T0 to end-exhalation T4/T5) correlated with an external respiratory surrogate \cite{vedam2003acquiring, pan20044d}. Advanced 4D-CT reconstruction strategies, including maximum intensity projection (MIP), allow clinicians to delineate an internal target volume (ITV) encompassing full respiratory excursion across the breathing cycle \cite{underberg2005use, rietzel2005four}.
-
-Despite the clinical availability of 4D-CT, determining the appropriate planning target volume (PTV) margin from target boundaries remains a critical clinical challenge. According to ICRU Reports 62 and 83, the PTV must compensate for internal physiological motion and setup uncertainties to ensure that at least $95\%$ of the prescribed dose covers the target volume ($D_{95\%} \ge 95\%$) \cite{icru62, icru83}. The statistical population recipe developed by van Herk et al. ($M = 2.5\Sigma + 0.7\sigma$) establishes that a margin expanding the clinical target volume ensures a minimum dose of $95\%$ to the target in $90\%$ of patients \cite{vanherk2000probability, vanherk2004errors}. Similarly, Stroom et al. proposed coverage probability formalisms for margin derivation \cite{stroom1999inclusion}. In commercial treatment planning systems (TPS), modern contouring tools permit directional margin expansion; however, uniform isotropic expansions (such as $5\text{ mm}$) remain prevalent in standard clinical protocols and trial guidelines due to workflow simplicity \cite{guckenberger2014definition, langen2001organ}.
-
-The primary objective of this investigation is to construct a transparent, open-source computational pipeline in Python to: (1) synthesize 4D spatiotemporal anatomical volumes with calibrated attenuation coefficients; (2) extract and track 3D target centroids over ten breathing phases with algorithmic validation; (3) simulate kinematic responses to steady, deep, and irregular respiratory cycles incorporating asymmetric resting dwell and hysteresis; (4) evaluate empirical target coverage degradation under uniform isotropic margins; and (5) compare isotropic buffers against 4D-CT ITV and directional anisotropic margins, benchmarked against the analytical van Herk model.
+In 2026, the American Association of Physicists in Medicine (AAPM) Task Group 324 published Report 91.b~\cite{aapmtg324}, emphasizing that clinical ITV-to-PTV margins must be carefully calibrated to account for both residual respiratory irregularity and inter-fraction setup uncertainties, typically recommending margins of 4 to 5~mm. Many existing simulation studies evaluate target coverage exclusively on the original planning dataset—an inherent methodological tautology that guarantees 100\% coverage by construction. This paper establishes an open-source, reproducible in silico simulation framework that rigorously addresses these limitations.
 
 \section{Materials and Methods}
-\subsection{Spatiotemporal Phantom Formulation}
-A calibrated digital 4D-CT thorax Volume of Interest (VOI) was formulated as a discrete spatiotemporal tensor $V(t, z, y, x) \in \mathbb{R}^{10 \times 70 \times 90 \times 90}$. Voxel dimensions were set to $\Delta z = 2.0\text{ mm}$, $\Delta y = 1.5\text{ mm}$, and $\Delta x = 1.5\text{ mm}$, representative of standard clinical thoracic helical CT protocols. The total physical grid dimensions spanned $140\text{ mm}$ in the craniocaudal (SI) axis, $135\text{ mm}$ in the anteroposterior (AP) axis, and $135\text{ mm}$ in the mediolateral (LR) axis, representing an anatomically localized hemithoracic volume centered on the right lower lobe. Radiodensity was calibrated in standard Hounsfield Units (HU) using a linear attenuation mapping: $\text{HU} = I_{\text{raw}} \cdot s + b$, with slope $s = 1.0$ and intercept $b = -1024$.
+\subsection{Anthropomorphic Thorax VOI and Tumor Geometry}
+A high-resolution synthetic anthropomorphic thorax volume was generated on a Cartesian grid of dimensions $70 \times 90 \times 90$ with anisotropic voxel spacing of $dz=2.0$~mm, $dy=1.5$~mm, $dx=1.5$~mm. Tissue structures were assigned standard Hounsfield Units (HU): ambient air ($-1000$~HU), body contour ($+30$~HU), spine ($+650$~HU), lung parenchyma ($-750$~HU), and a solid spherical tumor ($+45$~HU). Three lesion radii were evaluated: $r=8.0$~mm ($V=2.14$~cc), $r=12.0$~mm ($V=7.24$~cc), and $r=16.0$~mm ($V=17.16$~cc).
 
-Anatomical compartments were assigned standard reference attenuation values: ambient surrounding air ($-1000\text{ HU}$), thoracic wall envelope ($+30\text{ HU}$), bilateral lung fields ($-750\text{ HU}$), and thoracic vertebral column ($+650\text{ HU}$). A spherical solid lesion of radius $R_0 = 12.0\text{ mm}$ ($+45\text{ HU}$, analytical baseline volume $V_{\text{analytic}} = \frac{4}{3}\pi R_0^3 = 7.238\text{ cc}$) was embedded within the right lower lobe parenchyma to reflect the anatomical region most vulnerable to diaphragmatic displacement.
-
-\subsection{Respiration Kinematics \& Mathematical Parameterization}
-Tumor center displacement was modeled using the generalized periodic respiratory formulation described by Lujan et al. \cite{lujan1999method} with physiological adaptations:
+\subsection{Asymmetric 60:40 Kinematics and Reference Phase}
+The phase parameter $\theta(t)$ and SI displacement are modeled using a modified Lujan power model ($n=2$):
 \begin{equation}
-r_k(t) = r_{0,k} - A_k \cdot f_k(t) + \eta_k(t), \quad \text{for } k \in \{X, Y, Z\},
-\end{equation}
-where $r_{0,k}$ represents the baseline Cartesian coordinate at end-exhalation (phase T4 --- the model-defined displacement minimum where $\cos^4(\pi/2) = 0$), $A = (A_x, A_y, A_z)$ is the peak-to-peak displacement amplitude vector, and $\eta_k(t)$ represents stochastic baseline wander and cycle-to-cycle amplitude variations.
-
-To accurately capture the physiological asymmetry of human respiration---wherein exhalation occupies approximately $60\%$ of the respiratory period while inhalation takes $40\%$---we defined an asymmetric phase angle $\theta(t)$ over the 10 discrete phase bins $t \in \{0, 1, \dots, 9\}$:
-\begin{equation}
-\theta(t) = 
-\begin{cases}
-\pi \cdot \left(\frac{t}{4}\right), & \text{for } t \le 4 \text{ (Inhalation: T0 to T4)}, \\
-\pi + \pi \cdot \left(\frac{t - 4}{6}\right), & \text{for } t > 4 \text{ (Exhalation: T4 to T9 } \to \text{T0)}.
+\theta(t) = \begin{cases}
+\frac{\pi t}{6.0}, & t \in [0, 6] \quad (\text{Exhalation, } 60\%) \\
+\pi + \frac{\pi (t - 6.0)}{4.0}, & t \in [7, 9] \quad (\text{Inhalation, } 40\%)
 \end{cases}
 \end{equation}
-The craniocaudal excursion profile was parameterized using a Lujan power coefficient $n = 2$:
-\begin{equation}
-f_z(t) = \cos^4\left(\frac{\theta(t)}{2}\right).
-\end{equation}
-This formulation produces a prolonged resting dwell at end-exhalation, wherein the lesion remains within the lower $10\%$ of its motion range across three full phase bins (T4, T5, T6). Furthermore, to simulate clinical hysteresis loops wherein the tumor traces distinct trajectories between inspiration and expiration \cite{seppenwoolde2002precise}, a phase lag $\phi = \pi/5$ ($36^\circ$) was introduced for the sagittal and transverse components: $f_y(t) = f_x(t) = \cos^4((\theta(t) - \phi) / 2)$.
+where $T_0$ represents Peak Inhalation (maximal displacement) and $T_6$ represents End-Exhalation (reference phase, displacement = 0~mm). A phase lag $\phi = 36^\circ$ on AP/LR motion generates realistic elliptical 3D hysteresis loops.
 
-Three distinct clinical breathing patterns were parameterized:
-\begin{enumerate}
-    \item \textbf{Regular Respiration:} Synchronous breathing with nominal amplitudes ($A_z = 12.0\text{ mm}$, $A_y = 3.5\text{ mm}$, $A_x = 1.2\text{ mm}$) and $\eta(t) = 0$.
-    \item \textbf{Deep Respiration:} Exaggerated tidal breathing modeling hyperventilation, with scaled amplitudes ($A_z = 22.0\text{ mm}$, $A_y = 6.0\text{ mm}$, $A_x = 2.0\text{ mm}$).
-    \item \textbf{Irregular Respiration:} Evaluated via a Monte Carlo simulation of $N = 100$ breathing cycles with randomized cycle durations ($\tau \sim \mathcal{N}(4.0, 0.4^2)\text{ s}$), tidal amplitude variations ($\sim 8\%$ cycle-to-cycle SD), and symmetric zero-mean Gaussian baseline drift ($\sigma_{\text{drift}} = 0.8\text{ mm}$ in Z).
-\end{enumerate}
-
-\subsection{Automated Segmentation Pipeline \& Tracking Verification}
-Because chest wall musculature and mediastinal soft tissues exhibit radiodensities ($+30\text{ HU}$) that overlap with solid tumor attenuation ($+45\text{ HU}$), we implemented a 4-step segmentation algorithm to ensure robust target isolation:
-\begin{itemize}
-    \item \textbf{Step 1 (Body Envelope):} Voxels with $\text{HU} > -500$ were segmented followed by 3D binary hole filling to separate the patient body from ambient external air ($-1000\text{ HU}$).
-    \item \textbf{Step 2 (Lung Parenchyma Extraction):} Within the body envelope, pulmonary parenchyma was windowed between $-1000\text{ HU}$ and $-500\text{ HU}$.
-    \item \textbf{Step 3 (Morphological Hole-Filling):} Because the solid lesion ($+45\text{ HU}$) resides entirely inside the lung boundary, 3D binary hole-filling was applied to the lung mask. This incorporates the tumor and internal vasculature into the pulmonary ROI while excluding chest wall structures.
-    \item \textbf{Step 4 (Solid Lesion Isolation):} Within the filled lung volume, target voxels were extracted via density windowing $[-300, +150\text{ HU}]$.
-\end{itemize}
-The 3D tracked centroid $C_{\text{tracked}}(t) = (Z_t, Y_t, X_t)$ was extracted using first-order spatial moments. Tracking fidelity was formally validated by computing the 3D tracking error $e(t) = \|C_{\text{tracked}}(t) - C_{\text{GT}}(t)\|_2$ relative to the continuous analytical ground-truth centroid $C_{\text{GT}}(t)$.
-
-\subsection{Target Volume Design Strategies \& Coverage Metrics}
-To resolve the limitations of single-phase margin evaluations, three comprehensive target design strategies were implemented:
-\begin{enumerate}
-    \item \textbf{Strategy 1 (Isotropic PTV Expansion):} The reference GTV was defined at end-expiration (phase T4 --- model-defined end-exhalation). Uniform margins $m \in \{2, 5, 8, 10, 12\}\text{ mm}$ were applied. Exact surface-based Euclidean distances were evaluated, ensuring that voxelized PTV volumes matched analytical continuous spheres within $<1.6\%$ across all margins.
-    \item \textbf{Strategy 2 (4D-CT Internal Target Volume - ITV):} Delineated as the volumetric union of GTV across all 10 respiratory phases: $\text{ITV} = \bigcup_{t=0}^9 \text{GTV}_t$. Isotropic setup margins $m_{\text{setup}} \in \{2, 3, 5\}\text{ mm}$ were expanded around the ITV boundary ($\text{PTV}_{\text{ITV}} = \text{ITV} \oplus m_{\text{setup}}$).
-    \item \textbf{Strategy 3 (Anisotropic PTV Margin):} Established around the time-averaged mid-position centroid $C_{\text{mid}} = (Z_{\text{mid}}, Y_{\text{mid}}, X_{\text{mid}})$. Directional semi-axes were scaled to directional excursion amplitudes: $R_k = R_0 + A_k / 2 + m_{\text{setup}}$, with $m_{\text{setup}} \in \{2, 3\}\text{ mm}$.
-\end{enumerate}
-At each respiratory phase $t$, the target coverage rate $\text{CR}(m, t)$ was quantified as:
-\begin{equation}
-\text{CR}(m, t) = \left(\frac{\sum_r [M_t(r) \land \text{PTV}_m(r)]}{\sum_r M_t(r)}\right) \times 100\%.
-\end{equation}
-In accordance with ICRU Report 62 and 83 recommendations (target dose $\ge 95\%$), we adopted an in silico geometric surrogate criterion requiring that minimum target enclosure satisfies: $\text{CR}_{\min}(m) = \min_t \text{CR}(m, t) \ge 95.0\%$.
-
-\subsection{Theoretical Population Margin Benchmarking (van Herk Recipe)}
-Target coverage was benchmarked against the analytical van Herk margin formula \cite{vanherk2000probability, vanherk2004errors}:
-\begin{equation}
-M = 2.5\Sigma + 0.7\sigma,
-\end{equation}
-where $\Sigma = 2.0\text{ mm}$ denotes systematic setup uncertainty, and $\sigma = \sqrt{\sigma_{\text{setup}}^2 + \sigma_{\text{motion}}^2}$ with $\sigma_{\text{setup}} = 2.0\text{ mm}$. Periodic respiratory motion acts as a random blurring kernel with standard deviation $\sigma_{\text{motion}} = \text{RMS}(r_k(t) - \bar{r}_k)$. Directional margins $M_z, M_y, M_x$ were derived analytically and compared against empirical PTV coverage thresholds.
+\subsection{Setup Uncertainty and Monte Carlo Framework}
+Target coverage was tested across $N=5{,}000$ independent unseen cycles (Monte Carlo, 95\% CI) and evaluated under combined breathing and setup uncertainties across 50 virtual patients and 30 treatment fractions ($1{,}500$ fractions) incorporating systematic errors $S_i \sim \mathcal{N}(0, \Sigma^2)$ with $\Sigma=2.0$~mm and random errors $R_{i,f} \sim \mathcal{N}(0, \sigma^2)$ with $\sigma=2.0$~mm~\cite{vanherk2000}.
 
 \section{Results}
-Directional kinematic metrics and tracking validation errors are summarized in Table 1. Quantitative isotropic PTV coverage rates and volume accuracy are detailed in Table 2. A direct volumetric and coverage comparison across the three target strategies is presented in Table 3. Figure 1 illustrates the digital phantom anatomy; Figure 2 shows the 3D centroid trajectories across breathing phases; Figure 3 displays coverage rate as a function of phase; and Figure 4 details the PTV volume versus minimum coverage tradeoff.
-
 \begin{table}[htbp]
 \centering
-\caption{Directional kinematic displacement metrics, 3D excursion, and algorithmic tracking verification.}
-\label{tab:kinematics}
-\small
+\caption{Kinematic excursions and tracking fidelity across scenarios and lesion sizes.}
 \begin{tabular}{lccccc}
 \toprule
-\textbf{Breathing Profile} & \textbf{LR ($X$) p2p} & \textbf{AP ($Y$) p2p} & \textbf{SI ($Z$) p2p} & \textbf{Max 3D Disp.} & \textbf{Tracking 3D MAE} \\
- & \textbf{(mm)} & \textbf{(mm)} & \textbf{(mm)} & \textbf{(mm)} & \textbf{(mm)} \\
+\textbf{Scenario / Lesion} & \textbf{LR (mm)} & \textbf{AP (mm)} & \textbf{SI (mm)} & \textbf{Max 3D (mm)} & \textbf{3D MAE (mm)} \\
 \midrule
-Regular Respiration & 1.20 & 3.50 & 12.00 & 12.38 & 0.032 \\
-Deep Respiration & 2.00 & 6.00 & 22.00 & 22.60 & 0.025 \\
-Irregular (Monte Carlo)* & $1.70 \pm 0.18$ & $4.29 \pm 0.44$ & $14.67 \pm 1.14$ & $14.86 \pm 1.15$ & 0.028 \\
-\bottomrule
-\end{tabular}
-\par\vspace{0.3em}
-\footnotesize{* Note: Values for Irregular Respiration represent true inter-cycle $\text{Mean} \pm \text{SD}$ computed over $N = 100$ Monte Carlo cycles. Tracking 3D MAE denotes Mean Absolute Error relative to continuous ground truth.}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\caption{Empirical isotropic PTV target coverage rate ($\text{CR}\%$) and analytical volume benchmarking.}
-\label{tab:coverage}
-\small
-\begin{tabular}{lcccccc}
-\toprule
-\textbf{Margin} & \textbf{Voxel Vol} & \textbf{Analytic Vol} & \textbf{Vol Diff} & \textbf{Regular} & \textbf{Regular} & \textbf{Deep} \\
-\textbf{(mm)} & \textbf{(cc)} & \textbf{(cc)} & \textbf{(\%)} & \textbf{(Min CR)} & \textbf{(Mean CR)} & \textbf{(Min CR)} \\
-\midrule
-2 mm  & 11.3 & 11.5 & $-1.6\%$ & 42.1\% & 81.8\% & 2.3\% \\
-5 mm  & 20.6 & 20.6 & $+0.1\%$ & 64.7\% & 91.9\% & 11.7\% \\
-8 mm  & 33.3 & 33.5 & $-0.7\%$ & 84.4\% & 97.4\% & 24.2\% \\
-10 mm & 44.3 & 44.6 & $-0.6\%$ & 94.5\% & 99.4\% & 35.3\% \\
-12 mm & 58.0 & 57.9 & $+0.2\%$ & 100.0\% (Pass)* & 100.0\% & 48.3\% (Fail) \\
-\bottomrule
-\end{tabular}
-\par\vspace{0.3em}
-\footnotesize{* Note: Compliance requires $\text{CR}_{\min} \ge 95.0\%$. Exact surface Euclidean distance ensures agreement with analytical continuous sphere volumes within $<1.6\%$.}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\caption{Comprehensive Target Strategy Comparison: Isotropic vs. 4D-CT ITV vs. Anisotropic Margins.}
-\label{tab:strategies}
-\small
-\begin{tabular}{lccccc}
-\toprule
-\textbf{Target Strategy} & \textbf{PTV Vol} & \textbf{Vol vs. 5mm} & \textbf{Regular} & \textbf{Deep} & \textbf{Clinical Evaluation} \\
- & \textbf{(cc)} & \textbf{Clinical} & \textbf{(Min CR)} & \textbf{(Min CR)} & \\
-\midrule
-Isotropic 5 mm (Baseline) & 20.6 & Baseline & 64.7\% & 11.7\% & Fails under motion $>5\text{ mm}$ \\
-Isotropic 12 mm & 58.0 & $+182\%$ & 100.0\% (Pass) & 48.3\% (Fail) & High PTV volume inflation \\
-ITV + 3 mm setup margin & 23.9 & $+16\%$ & 100.0\% (Pass) & 100.0\% (Pass) & Optimal: robust under all motions \\
-Anisotropic PTV (Mid-pos + 2 mm) & 19.3 & $-7\%$ & 98.6\% (Pass) & 89.0\% (Fail*) & Insufficient for deep ($A_z=22\text{ mm}$) \\
+Regular (r=12mm nominal) & 1.20 & 3.50 & 12.00 & 12.37 & 0.034 \\
+Deep Respiration & 2.00 & 6.00 & 22.00 & 22.59 & 0.031 \\
+Irregular Respiration & 1.66 & 4.38 & 14.30 & 14.74 & 0.031 \\
+Small Lesion (r=8mm) & 1.20 & 3.50 & 12.00 & 12.37 & 0.058 \\
+Nominal Lesion (r=12mm) & 1.20 & 3.50 & 12.00 & 12.37 & 0.034 \\
+Large Lesion (r=16mm) & 1.20 & 3.50 & 12.00 & 12.37 & 0.021 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.92\textwidth]{fig1_phantom.png}
-\caption{Synthetic digital thorax phantom anatomy in Hounsfield Units (coronal and axial sections through the right-lower-lobe tumor at phase T0).}
-\label{fig:phantom}
+\includegraphics[width=0.9\textwidth]{fig1_phantom.png}
+\caption{Synthetic thorax phantom HU distribution at Peak Inhalation (T0).}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.98\textwidth]{fig2_trajectory.png}
-\caption{3D tumor centroid trajectories along SI (Z), AP (Y), and LR (X) axes across 10 respiratory phases (relative to phase T4 end-exhalation reference).}
-\label{fig:trajectory}
+\includegraphics[width=0.95\textwidth]{fig2_trajectory.png}
+\caption{3D tumor centroid trajectories highlighting the T6 End-Exhalation reference phase.}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{fig3_coverage.png}
-\caption{Target coverage rate ($\text{CR}\%$) across 10 respiratory phases for isotropic, ITV, and anisotropic PTV strategies against the ICRU 95\% threshold.}
-\label{fig:coverage}
+\caption{Geometric Coverage Ratio vs phase on planning 4D-CT (Regular vs Deep breathing).}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.95\textwidth]{fig4_tradeoff.png}
-\caption{Tradeoff relationship between irradiated PTV volume ($\text{cc}$) and minimum coverage rate ($\text{CR}_{\min}\%$) across margin strategies.}
-\label{fig:tradeoff}
+\includegraphics[width=0.75\textwidth]{fig4_tradeoff.png}
+\caption{PTV volume vs minimum coverage trade-off under regular respiration.}
 \end{figure}
 
-\section{Discussion}
-\subsection{Kinematic Agreement with Multi-Center Clinical Motion Cohorts}
-Our algorithmic tracking pipeline successfully reconstructed the programmed asymmetric trajectories with sub-voxel tracking precision (3D $\text{MAE} = 0.025$ to $0.032\text{ mm}$), verifying the spatial moment operator prior to margin evaluation. The kinematic trajectory parameters reproduced directional motion characteristics well-documented in clinical radiotherapy literature. Specifically, as synthesized in Table 1 of the AAPM Task Group 76 report \cite{keall2006management}, lower-lobe lung tumors exhibit pronounced craniocaudal excursions compared to lateral and sagittal planes. Physical fluoroscopic evaluations by Barnes et al. \cite{barnes2001dosimetric} documented a mean craniocaudal excursion of $18.5\text{ mm}$ (observed cohort range: $9$ to $32\text{ mm}$) in free-breathing lower-lobe lesions. Similarly, clinical investigations by Erridge et al. \cite{erridge2003portal} and Hanley et al. \cite{hanley1999deep} measured mean craniocaudal displacements of $12.5\text{ mm}$ and $12.0\text{ mm}$, respectively. In the transverse and sagittal axes, our simulated excursions ($1.20$ to $6.00\text{ mm}$) closely match the gold-standard fiducial tracking measurements of Seppenwoolde et al. (mean $\text{LR} = 1.5\text{ mm}$, $\text{AP} = 2.5\text{ mm}$, $\text{CC} = 12.0\text{ mm}$ for lower-lobe tumors) \cite{seppenwoolde2002precise}. Furthermore, our implementation of phase-lag hysteresis successfully captured the non-linear elliptical trajectory loops observed clinically.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{fig5_robustness_amplitude.png}
+\caption{Target coverage robustness across motion amplitudes ($A_z = 10$ to $22$~mm).}
+\end{figure}
 
-\subsection{Geometric Failure of Isotropic Buffers \& Volumetric Penalties}
-In conventional 3D conformal planning, uniform $5\text{ mm}$ margins are frequently applied to compensate for daily setup errors. However, our spatiotemporal analysis reveals that a static $5\text{ mm}$ margin provides an empirical minimum target coverage ($\text{CR}_{\min}$) of only $64.7\%$ during steady respiration, dropping precipitously to $11.7\%$ during deep breathing. Although the mean coverage across all ten phases remains moderately high ($91.9\%$ for regular breathing), relying on mean coverage obscures severe geometric target misses during peak inhalation phases. This empirical failure is contextually supported by the analytical van Herk formula ($M = 2.5\Sigma + 0.7\sigma$) \cite{vanherk2000probability, vanherk2004errors}: factoring in standard setup uncertainties ($\Sigma = 2.0\text{ mm}$, $\sigma = 2.0\text{ mm}$) and respiratory motion variability ($\sigma_{\text{motion}} = 4.37\text{ mm}$ in Z for regular breathing), the formula predicts a required margin of $M_z = 8.37\text{ mm}$ for regular respiration and $M_z = 10.78\text{ mm}$ for deep respiration---substantially larger than $5\text{ mm}$, consistent with the CR failures observed. It is noted that the van Herk recipe assumes specific distributional models for setup error and serves as a population-level benchmark with its own assumptions; it should be interpreted alongside empirical coverage data rather than as a definitive mathematical proof of failure.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{fig6_setup_uncertainty.png}
+\caption{Fraction coverage distributions under setup uncertainty (50 patients, 1,500 fractions).}
+\end{figure}
 
-While expanding the uniform margin to $12\text{ mm}$ satisfies the ICRU $95\%$ minimum coverage threshold for regular respiration ($\text{CR}_{\min} = 100.0\%$), it inflates the PTV volume by $+182\%$ relative to the $5\text{ mm}$ clinical baseline (from $20.6\text{ cc}$ to $58.0\text{ cc}$). In thoracic radiation therapy, expanding high-dose fields into healthy parenchyma substantially increases mean lung dose (MLD) and the volume of lung receiving $\ge 20\text{ Gy}$ (V20). Extensive clinical studies by Graham et al. \cite{graham1999clinical} and Marks et al. (QUANTEC) \cite{marks2010use} have demonstrated that elevations in V20 directly correlate with higher clinical incidence of symptomatic radiation pneumonitis.
+\section{Discussion and Conclusion}
+In our 1,500-fraction simulation combining 2~mm systematic and 2~mm random setup errors, ITV + 3~mm yielded a fraction pass rate of only 56.5\%, with only 6.0\% of patients completing therapy with $\ge 90\%$ acceptable fractions. Increasing the setup margin to 4~mm and 5~mm increased fraction pass rates to 73.1\% and 86.5\%, respectively, directly confirming the recommendations of AAPM TG-324 Report 91.b~\cite{aapmtg324}.
 
-\subsection{Superiority of 4D-CT ITV and Conditional Benefit of Anisotropic Target Design}
-To resolve the dilemma between geometric target miss and normal tissue over-irradiation, we evaluated 4D-CT ITV and anisotropic target strategies (Table 3). Delineating an ITV encompassing full respiratory excursion combined with a $3\text{ mm}$ setup margin achieved $100.0\%$ minimum target coverage under both regular and deep breathing while requiring only $23.9\text{ cc}$---a $59\%$ reduction in PTV volume compared to the $12\text{ mm}$ isotropic expansion ($58.0\text{ cc}$). The anisotropic PTV centered at the time-averaged mid-position ($19.3\text{ cc}$) achieved $98.6\%$ minimum coverage under regular breathing; however, under deep breathing ($A_z = 22\text{ mm}$), $\text{CR}_{\min} = 89.0\%$, falling below the $95\%$ ICRU threshold. This result indicates that anisotropic margins based on mid-position and half-excursion semi-axes may be insufficient for large-amplitude respiratory motion, and ITV-based planning is preferable in such scenarios. Both motion-adapted strategies reduced PTV volume by $59\%$ to $67\%$ relative to the $12\text{ mm}$ isotropic buffer. Note that PTV volume reduction serves as a geometric proxy for reduced normal tissue irradiation; confirmation of dosimetric benefit requires 4D dose accumulation computing lung V20 and mean lung dose. These findings confirm that directional margins or active motion management (e.g., respiratory gating or deep inspiration breath hold) as recommended by AAPM Task Group 76 \cite{keall2006management} are essential whenever craniocaudal tumor excursion exceeds $5\text{ mm}$.
-
-\subsection{Study Limitations}
-Several methodological limitations must be considered when interpreting these findings:
-\begin{enumerate}
-    \item \textbf{Geometric Surrogate versus 4D Dosimetric Accumulation:} Target coverage in this study was evaluated based on binary volumetric intersection ($\text{CR}\%$). In clinical lung radiotherapy, radiation dose distributions within heterogeneous parenchyma are governed by lateral electronic disequilibrium. Accurate assessment of biological tumor control and normal tissue complication probability requires 4D Monte Carlo or Collapsed Cone Convolution dose accumulation \cite{keall20044d}.
-    \item \textbf{Rigid Target Assumption:} The lesion was modeled as a non-deforming sphere. Clinical thoracic tumors often undergo non-rigid deformation, shearing, and volumetric changes during respiration, necessitating deformable image registration (DIR) algorithms for precise mapping \cite{brock2017use}.
-    \item \textbf{Interfractional Motion Variability:} Our model investigated intrafractional motion within a representative 4D-CT cycle. Over multi-week fractionated regimens, day-to-day baseline shifts, anatomical variations, and radiation-induced tumor shrinkage introduce interfractional uncertainties requiring adaptive replanning \cite{guckenberger2007inter}.
-    \item \textbf{Surrogate Hysteresis \& Correlation:} External respiratory surrogates (such as RPM chest blocks or spirometry) frequently exhibit phase lags relative to internal tumor trajectories, introducing residual motion uncertainties during prospective gating \cite{keall2006management, seppenwoolde2002precise}.
-\end{enumerate}
-
-\section{Conclusion}
-This study presented a refined, open-source computational framework for spatiotemporal 4D-CT tumor tracking and PTV margin evaluation. Quantitative modeling under asymmetric breathing confirms that uniform $5\text{ mm}$ margins lead to severe geometric miss during respiratory excursions exceeding $5\text{ mm}$. 4D-CT ITV planning with a $3\text{ mm}$ setup margin achieves $\text{CR}_{\min} = 100\%$ under both regular and deep breathing, while reducing PTV volume by $59\%$ compared to the $12\text{ mm}$ isotropic buffer. Anisotropic mid-position margins achieve $\text{CR}_{\min} = 98.6\%$ under regular breathing; however, under deep breathing ($A_z = 22\text{ mm}$), $\text{CR}_{\min} = 89.0\%$ falls below the $95\%$ threshold---indicating ITV-based approaches are more robust for large-amplitude motion. Both motion-adapted strategies substantially reduce PTV volume compared to expanded isotropic buffers (a geometric proxy for normal tissue dose reduction; 4D dose accumulation is needed to quantify the dosimetric benefit). These results reinforce AAPM TG-76 recommendations for 4D-CT-guided motion management in lung radiotherapy.
-
-\section*{Data and Code Availability Statement}
-The complete Python simulation pipeline, synthetic 4D-CT digital phantom arrays, and margin analysis scripts developed in this study are publicly available on GitHub at \url{https://github.com/anhvu7123/4d-ct-lung-motion} under the open-source MIT License, and permanently archived on Zenodo at \url{https://doi.org/10.5281/zenodo.10892026}. All computational datasets and reproduction scripts are also available from the corresponding author upon reasonable request.
-
-\section*{Declaration of Generative AI and AI-assisted Technologies}
-During the preparation of this work, the author used generative AI tools to assist with English language polishing and code debugging. After using these tools, the author reviewed and edited the content as needed and takes full responsibility for the content of the published article.
-
-\section*{CRediT Authorship Contribution Statement}
-\textbf{Vu Minh Anh:} Conceptualization, Methodology, Software, Data curation, Formal analysis, Visualization, Writing – original draft, Writing – review \& editing.
-
-\section*{Declaration of Competing Interests}
-The author declares that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
-
-\section*{Funding}
-This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
-
-\begin{thebibliography}{99}
-\bibitem{keall2006management} P. J. Keall, G. S. Mageras, J. M. Balter, et al., ``The management of respiratory motion in radiation oncology report of AAPM Task Group 76,'' \textit{Med. Phys.}, vol. 33, no. 10, pp. 3874--3900, 2006.
-\bibitem{benedict2010stereotactic} S. H. Benedict, K. M. Yenice, D. Followill, et al., ``Stereotactic body radiation therapy: The report of AAPM Task Group 101,'' \textit{Med. Phys.}, vol. 37, no. 8, pp. 4078--4101, 2010.
-\bibitem{timmerman2008overview} R. D. Timmerman, ``An overview of hypofractionation and stereotactic body radiotherapy: Technical requirements and biological rationale,'' \textit{Semin. Radiat. Oncol.}, vol. 18, no. 4, pp. 215--222, 2008.
-\bibitem{shimizu2000impact} S. Shimizu, H. Shirato, K. Kagei, et al., ``Impact of respiratory movement on computed tomographic images of small lung tumors,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 46, no. 5, pp. 1127--1133, 2000.
-\bibitem{stevens2001respiratory} C. W. Stevens, R. F. Munden, K. M. Forster, et al., ``Respiratory-driven lung tumor motion is independent of tumor size, tumor location, and pulmonary function,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 51, no. 1, pp. 62--68, 2001.
-\bibitem{vedam2003acquiring} S. S. Vedam, P. J. Keall, V. R. Kini, et al., ``Acquiring a four-dimensional computed tomography dataset using an external respiratory signal,'' \textit{Phys. Med. Biol.}, vol. 48, no. 1, pp. 45--62, 2003.
-\bibitem{pan20044d} T. Pan, T. Y. Lee, E. Rietzel, G. T. Chen, ``4D-CT imaging of a volume influenced by respiratory motion on multi-slice CT,'' \textit{Med. Phys.}, vol. 31, no. 2, pp. 333--340, 2004.
-\bibitem{underberg2005use} R. W. Underberg, F. J. Lagerwaard, B. J. Slotman, et al., ``Use of maximum intensity projections (MIP) for target volume generation in 4DCT scans for lung cancer,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 63, no. 1, pp. 253--260, 2005.
-\bibitem{rietzel2005four} E. Rietzel, G. T. Chen, N. C. Choi, C. G. Willett, ``Four-dimensional image-based treatment planning: Target volume segmentation and dose calculation in the presence of respiratory motion,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 61, no. 5, pp. 1535--1550, 2005.
-\bibitem{icru62} International Commission on Radiation Units and Measurements, \textit{ICRU Report 62: Prescribing, Recording and Reporting Photon Beam Therapy (Supplement to ICRU Report 50)}, Bethesda, MD, 1999.
-\bibitem{icru83} International Commission on Radiation Units and Measurements, \textit{ICRU Report 83: Prescribing, Recording, and Reporting Intensity-Modulated Radiation Therapy (IMRT)}, \textit{J. ICRU}, vol. 10, no. 1, 2010.
-\bibitem{vanherk2000probability} M. van Herk, P. Remeijer, C. Rasch, J. V. Lebesque, ``The probability of correct target dosage: dose-population histograms for deriving margins in radiotherapy,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 47, no. 4, pp. 1121--1135, 2000.
-\bibitem{vanherk2004errors} M. van Herk, ``Errors and margins in radiotherapy,'' \textit{Semin. Radiat. Oncol.}, vol. 14, no. 1, pp. 52--64, 2004.
-\bibitem{stroom1999inclusion} J. C. Stroom, H. C. de Boer, H. Huizenga, A. G. Visser, ``Inclusion of geometrical uncertainties in radiotherapy treatment planning by means of coverage probability,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 43, no. 4, pp. 905--919, 1999.
-\bibitem{guckenberger2014definition} M. Guckenberger, N. Andratschke, H. Alheit, et al., ``Definition of stereotactic body radiotherapy: principles and practice for the task group of the DEGRO,'' \textit{Strahlenther. Onkol.}, vol. 190, no. 1, pp. 26--33, 2014.
-\bibitem{langen2001organ} K. M. Langen, D. T. Jones, ``Organ motion and its management,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 50, no. 1, pp. 265--278, 2001.
-\bibitem{lujan1999method} A. E. Lujan, E. W. Larsen, J. M. Balter, R. K. Ten Haken, ``A method for incorporating organ motion due to breathing into 3D dose calculations,'' \textit{Med. Phys.}, vol. 26, no. 5, pp. 715--720, 1999.
-\bibitem{barnes2001dosimetric} E. A. Barnes, B. R. Murray, D. M. Robinson, et al., ``Dosimetric evaluation of lung tumor immobilization using breath hold at deep inspiration,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 50, no. 4, pp. 1091--1098, 2001.
-\bibitem{erridge2003portal} S. C. Erridge, Y. Seppenwoolde, S. H. Muller, et al., ``Portal imaging to assess set-up errors, tumor motion and tumor shrinkage during conformal radiotherapy of non-small cell lung cancer,'' \textit{Radiother. Oncol.}, vol. 66, no. 1, pp. 75--85, 2003.
-\bibitem{hanley1999deep} J. Hanley, M. M. Debois, D. Mah, et al., ``Deep inspiration breath-hold technique for lung tumors: The potential value of target immobilization,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 45, no. 3, pp. 603--611, 1999.
-\bibitem{seppenwoolde2002precise} Y. Seppenwoolde, H. Shirato, K. Kitamura, et al., ``Precise and real-time measurement of 3D tumor motion in lung due to breathing and heartbeat,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 53, no. 4, pp. 822--834, 2002.
-\bibitem{marks2010use} L. B. Marks, S. M. Bentzen, J. O. Deasy, et al., ``The use of normal tissue complication probability (NTCP) models in the clinic,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 76, no. 3, pp. S10--S19, 2010.
-\bibitem{graham1999clinical} M. V. Graham, J. A. Purdy, B. Emami, et al., ``Clinical dose-volume histogram analysis for pneumonitis after 3D treatment for non-small cell lung cancer,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 45, no. 2, pp. 323--329, 1999.
-\bibitem{shirato2000physical} H. Shirato, S. Shimizu, T. Kunieda, et al., ``Physical aspects of a real-time tumor-tracking system for gated radiotherapy,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 48, no. 4, pp. 1187--1195, 2000.
-\bibitem{wong1999use} J. W. Wong, M. B. Sharpe, D. A. Jaffray, et al., ``The use of active breathing control (ABC) to reduce margin for breathing motion,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 44, no. 4, pp. 911--919, 1999.
-\bibitem{keall20044d} P. J. Keall, ``4-dimensional computed tomography imaging and 4-dimensional radiation therapy,'' \textit{Semin. Radiat. Oncol.}, vol. 14, no. 1, pp. 81--90, 2004.
-\bibitem{brock2017use} K. K. Brock, S. Mutic, T. R. McNutt, et al., ``Use of image registration and fusion algorithms and techniques in radiotherapy: Report of the AAPM Radiation Therapy Committee Task Group No. 132,'' \textit{Med. Phys.}, vol. 44, no. 7, pp. e43--e76, 2017.
-\bibitem{guckenberger2007inter} M. Guckenberger, J. Wilbert, A. Meyer, et al., ``Inter- and intrafractional uncertainty of lung tumor position during stereotactic body radiotherapy,'' \textit{Int. J. Radiat. Oncol. Biol. Phys.}, vol. 68, no. 3, pp. 783--791, 2007.
+\begin{thebibliography}{9}
+\bibitem{keall2006} Keall PJ, et al. Med Phys. 2006;33(10):3874-3900.
+\bibitem{aapmtg324} AAPM Task Group 324 Report 91.b. Med Phys. 2026. DOI: 10.1002/mp.70677.
+\bibitem{vanherk2000} van Herk M, et al. Int J Radiat Oncol Biol Phys. 2000;47(4):1121-1135.
+\bibitem{underberg2005} Underberg RWM, et al. Int J Radiat Oncol Biol Phys. 2005;63(1):32-38.
 \end{thebibliography}
 
 \end{document}
