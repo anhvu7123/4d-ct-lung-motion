@@ -18,10 +18,10 @@
 \maketitle
 
 \begin{abstract}
-\noindent\textbf{Background:} Accurate management of respiratory motion remains a critical challenge in stereotactic body radiation therapy (SBRT) for lung cancer. Conventional static 3D-CT expansions frequently either underdose moving tumors or unnecessarily irradiate healthy lung parenchyma. This study presents a comprehensive in silico framework evaluating 4D-CT respiratory kinematics, internal target volume (ITV) expansions, and anisotropic margins, with rigorous robustness testing under unseen breathing cycles and multi-regimen setup uncertainties (SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx).\\
-\textbf{Methods:} A 10-phase synthetic thorax phantom was constructed incorporating an asymmetric 60:40 breathing cycle (60\% exhalation across $T_0 \to T_6$; 40\% inhalation across $T_6 \to T_0$; $T_6$ designated as end-exhalation reference) with Lujan $n=2$ resting dwell and $36^\circ$ AP/LR hysteresis. Three lesion sizes ($r=8, 12, 16$~mm) and three motion profiles were evaluated. Frozen planning PTVs (Isotropic 2--12~mm, ITV + 0--5~mm, Anisotropic 2--4~mm) were tested across $N=5{,}000$ independent unseen cycles (Monte Carlo with exact 95\% Wilson score confidence intervals) and evaluated under combined breathing and setup uncertainties across 50 virtual patients for SBRT 3-fx, SBRT 5-fx, and conventional 30-fx regimens (2~mm systematic and 2~mm random errors) aligned with AAPM TG-324 Report 91.b.\\
-\textbf{Results:} Centroid tracking achieved 3D MAE of 0.058~mm, 0.034~mm, and 0.021~mm for 8~mm, 12~mm, and 16~mm lesions. Conventional 5~mm isotropic expansion achieved only 64.7\% planning minimum coverage. Both ITV + 3~mm (23.9~cc) and Anisotropic + 2~mm (19.3~cc, $-6.3\%$ volume vs. 5~mm isotropic baseline) achieved $\ge 99.4\%$ planning coverage. However, under irregular breathing with baseline drift ($N=5{,}000$), ITV + 3~mm pass rate dropped to 87.1\% (95\% Wilson CI: [86.1\%, 88.0\%]; mean min CR: 97.6\%, empirical range: [86.5\%, 100.0\%]), whereas ITV + 5~mm maintained a 97.9\% pass rate (95\% Wilson CI: [97.4\%, 98.2\%]; mean min CR: 99.7\%, empirical range: [97.8\%, 100.0\%]). Under setup uncertainty, tight margins deteriorated sharply in SBRT: for 5-fraction SBRT, ITV + 3~mm yielded only 12.0\% patient all-fraction success, whereas ITV + 5~mm restored all-fraction success to 62.0\% (and 82.0\% in 3-fraction SBRT). In 30-fraction conventional therapy, ITV + 5~mm achieved an 87.4\% fraction pass rate and 70.0\% course-averaged success.\\
-\textbf{Conclusions:} While anisotropic and tight ITV margins provide geometric sparing under idealized regular breathing, they exhibit substantial coverage degradation in the presence of realistic setup errors and baseline drift. In concordance with AAPM TG-324, an ITV setup margin of 4--5~mm is clinically required for free-breathing lung SBRT unless daily volumetric image guidance (CBCT) and active motion management are deployed.
+\noindent\textbf{Background:} Accurate management of respiratory motion remains a critical challenge in stereotactic body radiation therapy (SBRT) for lung cancer. Conventional static 3D-CT expansions frequently either underdose moving tumors or unnecessarily irradiate healthy lung parenchyma. This study presents a comprehensive in silico framework evaluating 4D-CT respiratory kinematics, internal target volume (ITV) expansions, and anisotropic margins, with rigorous robustness testing under unseen breathing cycles and multi-regimen setup uncertainties (SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx across 200 virtual patients).\\
+\textbf{Methods:} A 10-phase synthetic thorax phantom was constructed incorporating an asymmetric 60:40 breathing cycle (60\% exhalation across $T_0 \to T_6$; 40\% inhalation across $T_6 \to T_0$; $T_6$ designated as end-exhalation reference) with Lujan $n=2$ resting dwell and $36^\circ$ AP/LR hysteresis. Three lesion sizes ($r=8, 12, 16$~mm) and three motion profiles were evaluated. Frozen planning PTVs (Isotropic 2--12~mm, ITV + 0--5~mm, Anisotropic 2--4~mm) were tested across $N=5{,}000$ independent unseen cycles (Monte Carlo with 95\% Wilson score confidence intervals) and evaluated under combined breathing and setup uncertainties across 200 virtual patients (total 7,600 treatment sessions with 2~mm systematic and 2~mm random errors) aligned with AAPM TG-324 Report 91.b.\\
+\textbf{Results:} Centroid tracking achieved 3D MAE of 0.058~mm, 0.034~mm, and 0.021~mm for 8~mm, 12~mm, and 16~mm lesions. Conventional 5~mm isotropic expansion achieved only 64.7\% planning minimum coverage. Both ITV + 3~mm (23.9~cc) and Anisotropic + 2~mm (19.3~cc, $-6.3\%$ volume vs. 5~mm isotropic baseline) achieved $\ge 99.4\%$ planning coverage. Under unseen irregular breathing with baseline drift ($N=5{,}000$), ITV + 3~mm pass rate dropped to 68.3\% (95\% Wilson CI: [67.0\%, 69.5\%]; mean min CR: 96.0\%, empirical range: [82.8\%, 100.0\%]), whereas ITV + 5~mm maintained a 96.2\% pass rate (95\% Wilson CI: [95.7\%, 96.7\%]; mean min CR: 99.2\%, empirical range: [94.7\%, 100.0\%]). Under setup uncertainty across 200 virtual patients, tight margins proved severely inadequate in SBRT: for 5-fraction SBRT, ITV + 3~mm yielded only 6.0\% patient all-fraction success, whereas ITV + 5~mm restored all-fraction success to 53.0\% (and 66.0\% in 3-fraction SBRT). In 30-fraction conventional therapy, ITV + 5~mm achieved an 82.7\% fraction pass rate. Multi-lesion analysis revealed that small lesions ($r=8$~mm, 2.1~cc) suffer disproportionate edge undercoverage (SBRT 5-fx all-pass of only 0.5\% for ITV+3mm and 29.5\% for ITV+5mm).\\
+\textbf{Conclusions:} While expanding the ITV setup margin to 4--5~mm substantially improved geometric robustness compared to tight 3~mm expansions, it did not eliminate undercoverage: 17.3\% of treatment fractions in conventional radiotherapy and 47.0\% of patients in 5-fraction SBRT experienced geometric undercoverage without daily correction. In concordance with AAPM TG-324 Report 91.b, an ITV setup margin of 4--5~mm serves as a commonly utilized clinical baseline for free-breathing lung SBRT, yet remains vulnerable unless coupled with daily volumetric image guidance (CBCT) or active motion management.
 \end{abstract}
 
 \section{Introduction}
@@ -50,12 +50,12 @@ where $T_0$ represents Peak Inhalation ($z(0) = z_0 - A_z$) and $T_6$ represents
 x(t) = x_0 + A_x \sin(\theta(t)), \quad y(t) = y_0 + A_y \sin\left((\theta(t) - \phi) \bmod 2\pi\right)
 \end{equation}
 
-\subsection{Multi-Regimen Setup Uncertainty Modeling}
-Target coverage was tested across $N=5{,}000$ independent unseen cycles (Monte Carlo with exact 95\% Wilson score confidence intervals) and evaluated under combined breathing and setup uncertainties across 50 virtual patients for SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx regimens:
+\subsection{Multi-Regimen Setup Uncertainty Modeling (N_pat = 200)}
+Target coverage was tested across $N=5{,}000$ independent unseen cycles (Monte Carlo with 95\% Wilson score confidence intervals) and evaluated under combined breathing and setup uncertainties across 200 virtual patients for SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx regimens (total 7,600 treatment sessions):
 \begin{equation}
 \mathbf{r}_{\text{tumor}}(t, i, f) = \mathbf{r}_{\text{resp}}(t) + \mathbf{S}_i + \mathbf{R}_{i,f}
 \end{equation}
-where systematic preparation error $\mathbf{S}_i \sim \mathcal{N}(\mathbf{0}, \Sigma^2 \mathbf{I})$ with $\Sigma=2.0$~mm and random execution error $\mathbf{R}_{i,f} \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})$ with $\sigma=2.0$~mm~\cite{vanherk2000}.
+where systematic preparation error $\mathbf{S}_i \sim \mathcal{N}(\mathbf{0}, \Sigma^2 \mathbf{I})$ with $\Sigma=2.0$~mm is constant across all fractions of patient $i$, and random execution error $\mathbf{R}_{i,f} \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})$ with $\sigma=2.0$~mm is sampled independently per fraction~\cite{vanherk2000}.
 
 \section{Results}
 \begin{table}[htbp]
@@ -94,19 +94,36 @@ Large Lesion (r=16mm) & 1.20 & 3.50 & 12.00 & 12.37 & 0.021 & [6.4, 6.7, 8.4] \\
 
 \begin{table}[htbp]
 \centering
-\caption{Target strategy comparison: volume, planning coverage, and multi-regimen robustness.}
+\caption{Target strategy comparison: volume, planning coverage, and multi-regimen robustness (N_pat = 200).}
 \begin{tabular}{lccccccc}
 \toprule
 \textbf{Strategy} & \textbf{Vol (cc)} & \textbf{vs 5mm} & \textbf{Plan MinCR} & \textbf{Irreg MC Pass} & \textbf{SBRT 3fx} & \textbf{SBRT 5fx} & \textbf{CFRT 30fx} \\
 \midrule
-Isotropic 5~mm & 20.6 & Baseline & 64.7\% & 0.0\% [0.0, 0.1] & 0.0\% & 0.0\% & 1.9\% \\
-Isotropic 12~mm & 58.0 & $+182\%$ & 100.0\% & 29.9\% [28.6, 31.1] & 40.0\% & 40.0\% & 69.6\% \\
-ITV + 2~mm & 22.2 & $+7.6\%$ & 100.0\% & 55.4\% [54.0, 56.8] & 8.0\% & 2.0\% & 35.3\% \\
-ITV + 3~mm & 23.9 & $+16.0\%$ & 100.0\% & 87.1\% [86.1, 88.0] & 42.0\% & 12.0\% & 59.1\% \\
-ITV + 4~mm (TG-324) & 25.7 & $+24.9\%$ & 100.0\% & 87.2\% [86.3, 88.1] & 62.0\% & 32.0\% & 74.9\% \\
-ITV + 5~mm (TG-324) & 27.7 & $+34.3\%$ & 100.0\% & 97.9\% [97.4, 98.2] & 82.0\% & 62.0\% & 87.4\% \\
-Anisotropic + 2~mm & 19.3 & $-6.3\%$ & 99.4\% & 18.3\% [17.3, 19.4] & 0.0\% & 0.0\% & 19.9\% \\
-Anisotropic + 3~mm & 22.0 & $+6.9\%$ & 100.0\% & 53.1\% [51.7, 54.5] & 14.0\% & 2.0\% & 43.3\% \\
+Isotropic 5~mm & 20.6 & Baseline & 64.7\% & 0.0\% [0.0, 0.1] & 0.0\% & 0.0\% & 1.5\% \\
+Isotropic 12~mm & 58.0 & $+182\%$ & 100.0\% & 29.9\% [28.6, 31.1] & 37.5\% & 31.5\% & 69.8\% \\
+ITV + 2~mm & 22.2 & $+7.6\%$ & 100.0\% & 48.5\% [47.1, 49.9] & 1.5\% & 0.0\% & 20.7\% \\
+ITV + 3~mm & 23.9 & $+16.0\%$ & 100.0\% & 68.3\% [67.0, 69.5] & 16.5\% & 6.0\% & 46.4\% \\
+ITV + 4~mm (TG-324) & 25.7 & $+24.9\%$ & 100.0\% & 87.2\% [86.3, 88.1] & 42.0\% & 27.0\% & 68.5\% \\
+ITV + 5~mm (TG-324) & 27.7 & $+34.3\%$ & 100.0\% & 96.2\% [95.7, 96.7] & 66.0\% & 53.0\% & 82.7\% \\
+Anisotropic + 2~mm & 19.3 & $-6.3\%$ & 99.4\% & 18.3\% [17.3, 19.4] & 0.5\% & 0.0\% & 20.4\% \\
+Anisotropic + 3~mm & 22.0 & $+6.9\%$ & 100.0\% & 53.1\% [51.7, 54.5] & 12.0\% & 4.0\% & 42.5\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Multi-lesion robustness analysis across tumor volumes ($r = 8, 12, 16$~mm, N_pat = 200).}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Lesion Radius} & \textbf{GTV Vol} & \textbf{Strategy} & \textbf{PTV Vol} & \textbf{Plan MinCR} & \textbf{Irreg MC Pass} & \textbf{SBRT 5fx AllPass} \\
+\midrule
+$r=8$~mm & 2.1~cc & ITV + 3~mm & 9.9~cc & 100.0\% & 54.9\% [52.7, 57.1] & 0.5\% [0.1, 2.8] \\
+$r=8$~mm & 2.1~cc & ITV + 5~mm & 15.1~cc & 100.0\% & 86.3\% [84.7, 87.7] & 29.5\% [23.6, 36.2] \\
+$r=12$~mm & 7.2~cc & ITV + 3~mm & 22.3~cc & 100.0\% & 67.8\% [65.7, 69.8] & 6.5\% [3.8, 10.8] \\
+$r=12$~mm & 7.2~cc & ITV + 5~mm & 31.0~cc & 100.0\% & 96.3\% [95.4, 97.0] & 51.0\% [44.1, 57.8] \\
+$r=16$~mm & 17.2~cc & ITV + 3~mm & 41.7~cc & 100.0\% & 81.2\% [79.5, 82.9] & 9.0\% [5.8, 13.8] \\
+$r=16$~mm & 17.2~cc & ITV + 5~mm & 54.5~cc & 100.0\% & 97.9\% [97.1, 98.4] & 60.0\% [53.1, 66.5] \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -137,24 +154,24 @@ Anisotropic + 3~mm & 22.0 & $+6.9\%$ & 100.0\% & 53.1\% [51.7, 54.5] & 14.0\% & 
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.85\textwidth]{fig5_robustness_amplitude.png}
-\caption{Target coverage robustness across motion amplitudes ($A_z = 10$ to $22$~mm) with 95\% Wilson score CIs.}
+\includegraphics[width=0.95\textwidth]{fig5_robustness_amplitude.png}
+\caption{Target coverage robustness across motion amplitudes ($A_z = 10$ to $22$~mm). (A) Pass rate with 95\% Wilson score CIs; (B) Minimum coverage ratio with mean and empirical 95\% inter-percentile range [P2.5, P97.5].}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{fig6_setup_uncertainty.png}
-\caption{Setup uncertainty evaluation comparing CFRT 30-fraction distribution (left) and SBRT 3-fx \& 5-fx all-pass rates (right).}
+\caption{Setup uncertainty evaluation comparing CFRT 30-fraction distribution (left) and SBRT 3-fx \& 5-fx all-pass rates (right) across 200 virtual patients.}
 \end{figure}
 
 \section{Discussion and Limitations}
-In our simulation combining 2~mm systematic and 2~mm random setup errors, ITV + 3~mm yielded a fraction pass rate of only 59.1\% in CFRT and an all-fraction success rate of only 12.0\% in 5-fraction SBRT. Increasing the setup margin to 4~mm and 5~mm boosted SBRT 5-fraction all-pass success to 32.0\% and 62.0\%, respectively, and elevated CFRT course-averaged success to 70.0\%, directly confirming the recommendations of AAPM TG-324 Report 91.b~\cite{aapmtg324}.
+In our simulation combining 2~mm systematic and 2~mm random setup errors across 200 virtual patients, ITV + 3~mm yielded a fraction pass rate of only 46.4\% in CFRT and an all-fraction success rate of only 6.0\% in 5-fraction SBRT. Increasing the setup margin to 4~mm and 5~mm boosted SBRT 5-fraction all-pass success to 27.0\% and 53.0\%, respectively, and elevated CFRT fraction pass rates to 82.7\%, directly supporting the recommendations of AAPM TG-324 Report 91.b~\cite{aapmtg324}.
 
 \subsection{Study Limitations}
 Several limitations should be noted: (1) Rigid phantom geometry does not model non-rigid lung deformation~\cite{rietzel2005}; (2) Coverage Ratio $\ge 95\%$ is a geometric surrogate, whereas absorbed dose involves tissue heterogeneities~\cite{lujan1999}; (3) Real-world external surrogates can exhibit phase mismatch with internal motion~\cite{keall2006, vedam2003}; (4) Hypofractionated radiobiology involves biological effective dose (BED) escalation~\cite{timmerman2006}.
 
 \section{Conclusion}
-While expanding to ITV + 5~mm substantially improves coverage robustness compared to tight 3~mm margins, geometric undercoverage persists in 12.6\% to 38.0\% of sessions without daily correction. Therefore, in concordance with AAPM TG-324, ITV margins of 4--5~mm are required for free-breathing lung SBRT, but remain insufficient for complete margin reduction unless coupled with daily volumetric image guidance (CBCT) and active motion management.
+While expanding to ITV + 5~mm substantially improves coverage robustness compared to tight 3~mm margins, geometric undercoverage persists: 17.3\% of individual treatment fractions in conventional radiotherapy and 47.0\% of patients in 5-fraction SBRT experienced geometric undercoverage without daily correction. Therefore, in concordance with AAPM TG-324 Report 91.b, an ITV setup margin of 4--5~mm serves as a commonly utilized clinical baseline for free-breathing lung SBRT, yet remains vulnerable unless coupled with daily volumetric image guidance (CBCT) or active motion management.
 
 \begin{thebibliography}{20}
 \bibitem{keall2006} Keall PJ, et al. Med Phys. 2006;33(10):3874-3900.
@@ -164,8 +181,8 @@ While expanding to ITV + 5~mm substantially improves coverage robustness compare
 \bibitem{lujan1999} Lujan AE, et al. Med Phys. 1999;26(5):715-720.
 \bibitem{seppenwoolde2002} Seppenwoolde Y, et al. Int J Radiat Oncol Biol Phys. 2002;53(4):822-834.
 \bibitem{icru83} ICRU Report 83. J ICRU. 2010;10(1).
-\bibitem{underberg2005} Underberg RWM, et al. Int J Radiat Oncol Biol Phys. 2005;61(1):253-260.
-\bibitem{wolthaus2008} Wolthaus JW, et al. Med Phys. 2008;35(2):572-581.
+\bibitem{underberg2005} Underberg RWM, et al. Int J Radiat Oncol Biol Phys. 2005;63(1):253-260.
+\bibitem{wolthaus2008} Wolthaus JW, et al. Med Phys. 2008;35(9):3998-4011.
 \bibitem{sonke2008} Sonke JJ, et al. Int J Radiat Oncol Biol Phys. 2008;70(2):590-598.
 \bibitem{shirato2003} Shirato H, et al. Int J Clin Oncol. 2003;8(2):78-84.
 \bibitem{vedam2003} Vedam SS, et al. Phys Med Biol. 2003;48(1):45-62.

@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 """
-4D-CT Lung Tumor Kinematics, Target Margin Strategies, and Robustness Evaluation Pipeline
+4D-CT Lung Tumor Kinematics, PTV Margin Strategies, and Robustness Evaluation Framework
 Author: Vu Minh Anh & Research Assistant
 Faculty of Information Technology, Ho Chi Minh City University of Industry and Trade (HUIT)
 
-Pipeline Version: 3.1 (Comprehensive Revision for Peer-Review V3)
-Key Updates:
-1. Statistical Rigor: Exact Wilson Score 95% Confidence Intervals for all binomial pass rates,
-   clearly separated from the empirical 95% inter-percentile ranges [P2.5, P97.5] of coverage ratios.
-2. Clinical Hypofractionation (SBRT): Added SBRT 3-fraction (3x18 Gy) and 5-fraction (5x10 Gy)
-   courses alongside conventional 30-fraction radiotherapy, evaluating both all-fraction and course-averaged success.
-3. Multi-Lesion Robustness: Evaluates tracking and target coverage across small (r=8mm), nominal (r=12mm),
-   and large (r=16mm) parenchymal tumors.
-4. Corrected Axis Limits (0-105%): Figure 3, Figure 5, and Figure 6 now display unclipped 0-105% coverage axes.
-5. Direct Alignment with AAPM TG-324 Report 91.b (2026).
+Pipeline Version: 3.2 (Comprehensive Peer-Review Revision)
+Key Updates in Revision 3.2:
+1. Physical Asymmetric Breathing Model: 60% exhalation (T0->T6, 6 bins) and 40% inhalation (T6->T0, 4 bins).
+   T0 = Peak Inhalation (maximum displacement).
+   T6 = End-Exhalation (reference phase, displacement = 0).
+2. Exact 95% Wilson Score Confidence Intervals for binomial pass rates, clearly distinguished
+   from empirical 95% inter-percentile ranges [P2.5, P97.5] of continuous Coverage Ratios.
+3. 2-Panel Figure 5:
+   - Panel A: Pass Probability P(CR_min >= 95%) with 95% Wilson score confidence intervals.
+   - Panel B: Continuous Minimum Coverage Ratio (Mean and empirical 95% range [P2.5, P97.5]).
+4. Multi-Regimen Setup Uncertainty Modeling across N_pat = 200 virtual patients:
+   - SBRT 3-fx (200 pts x 3 fx = 600 sessions)
+   - SBRT 5-fx (200 pts x 5 fx = 1,000 sessions)
+   - CFRT 30-fx (200 pts x 30 fx = 6,000 sessions)
+   Total = 7,600 treatment sessions.
+5. Multi-lesion robustness analysis across all 3 lesion sizes (r = 8, 12, 16 mm).
+6. Figure 6 with rotated X-axis labels to prevent label crowding.
 """
 
 import os
@@ -22,36 +29,36 @@ import time
 import numpy as np
 import scipy.ndimage as ndi
 
-def wilson_score_interval(p_pct, n, confidence=0.95):
+try:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+
+def wilson_score_interval(p_pct, n, z=1.95996398454):
     """
-    Calculate the Wilson score 95% confidence interval for a binomial proportion.
-    p_pct: percentage [0..100]
+    Calculate 95% Wilson Score Confidence Interval for a binomial proportion.
+    p_pct: percentage [0, 100]
     n: sample size
-    Returns [ci_lower_pct, ci_upper_pct] in percent.
+    Returns: (lower_pct, upper_pct) rounded to 2 decimal places
     """
     if n <= 0:
-        return [0.0, 0.0]
-    z = 1.95996  # 95% two-sided z-score
-    p = float(p_pct) / 100.0
-    denominator = 1.0 + (z**2) / n
-    center = (p + (z**2) / (2.0 * n)) / denominator
-    half_width = (z * np.sqrt((p * (1.0 - p) / n) + (z**2) / (4.0 * (n**2)))) / denominator
-    lower = max(0.0, (center - half_width) * 100.0)
-    upper = min(100.0, (center + half_width) * 100.0)
-    return [round(lower, 2), round(upper, 2)]
+        return 0.0, 0.0
+    p = p_pct / 100.0
+    denom = 1.0 + (z**2) / n
+    center = (p + (z**2) / (2.0 * n)) / denom
+    margin = (z * np.sqrt((p * (1.0 - p) / n) + ((z**2) / (4.0 * (n**2))))) / denom
+    lower = max(0.0, center - margin) * 100.0
+    upper = min(1.0, center + margin) * 100.0
+    return round(float(lower), 2), round(float(upper), 2)
 
 def generate_dynamic_phantom(scenario='regular', tumor_radius=12.0, nz=70, ny=90, nx=90, dz=2.0, dy=1.5, dx=1.5):
     """
     Generate a 10-phase 4D-CT synthetic thorax Volume of Interest (T, Z, Y, X) in Hounsfield Units (HU).
     Grid spacing: dz=2.0 mm, dy=1.5 mm, dx=1.5 mm.
     Physical dimensions: 140 mm (SI) x 135 mm (AP) x 135 mm (LR).
-
-    Breathing Model:
-    - 10 discrete phases: T0 to T9.
-    - T0 = Peak Inhalation (maximal lung expansion, maximum inferior diaphragm displacement).
-    - T0 -> T6: Exhalation (slow passive relaxation, 6 phase bins = 60% cycle duration).
-    - T6 = End-Exhalation (resting dwell, minimum displacement = 0.0 mm, reference phase).
-    - T6 -> T9 -> T0: Inhalation (active contraction, 4 phase bins = 40% cycle duration).
     """
     n_phases = 10
     volumes = np.zeros((n_phases, nz, ny, nx), dtype=np.int16)
@@ -64,16 +71,13 @@ def generate_dynamic_phantom(scenario='regular', tumor_radius=12.0, nz=70, ny=90
 
     cz, cy, cx = (nz * dz) / 2.0, (ny * dy) / 2.0, (nx * dx) / 2.0
 
-    # Thoracic body contour (HU ~ +30)
     body_mask = (((Z - cz) / (0.45 * nz * dz))**2 + 
                  ((Y - cy) / (0.42 * ny * dy))**2 + 
                  ((X - cx) / (0.42 * nx * dx))**2) <= 1.0
 
-    # Thoracic spine (HU ~ +650)
     spine_mask = (((Y - (cy - 0.28 * ny * dy)) / 12.0)**2 + 
                   ((X - cx) / 10.0)**2 <= 1.0) & body_mask
 
-    # Bilateral lungs (HU ~ -750)
     r_lung_mask = (((Z - cz) / (0.35 * nz * dz))**2 + 
                    ((Y - (cy + 5.0)) / (0.30 * ny * dy))**2 + 
                    ((X - (cx - 25.0)) / (0.16 * nx * dx))**2 <= 1.0)
@@ -84,38 +88,30 @@ def generate_dynamic_phantom(scenario='regular', tumor_radius=12.0, nz=70, ny=90
     
     lung_mask = (r_lung_mask | l_lung_mask) & body_mask & (~spine_mask)
 
-    # Spherical tumor baseline position (Right Lower Lobe)
-    base_tz = cz - 10.0  # mm
-    base_ty = cy + 5.0   # mm
-    base_tx = cx - 25.0  # mm
+    base_tz = cz - 10.0
+    base_ty = cy + 5.0
+    base_tx = cx - 25.0
 
     t_steps = np.arange(n_phases)
 
-    # Asymmetric 60:40 breathing cycle:
-    # Exhalation: T0 -> T6 (6 bins = 60%, slow relaxation to end-exhale)
-    # Inhalation: T6 -> T9 -> T0 (4 bins = 40%, fast active inhale)
+    # 60:40 breathing cycle:
     theta = np.where(
         t_steps <= 6,
         np.pi * t_steps / 6.0,
         np.pi + np.pi * (t_steps - 6.0) / 4.0
     )
 
-    # Lujan model with power n=2 for prolonged end-exhalation resting dwell:
     z_raw = np.cos(theta / 2.0)**4
 
-    # Hysteresis phase lag phi = pi/5 (36 deg) on AP/LR motion:
     phi_lag = np.pi / 5.0
     theta_lag = (theta - phi_lag) % (2.0 * np.pi)
     y_raw = np.cos(theta_lag / 2.0)**4
     x_raw = y_raw
 
-    # Strictly normalize between [0.0, 1.0]
     z_norm = (z_raw - np.min(z_raw)) / (np.max(z_raw) - np.min(z_raw))
     y_norm = (y_raw - np.min(y_raw)) / (np.max(y_raw) - np.min(y_raw))
     x_norm = (x_raw - np.min(x_raw)) / (np.max(x_raw) - np.min(x_raw))
 
-    # T6 is the true end-exhalation reference (z_norm[6] == 0.0)
-    # T0 is peak inhalation (z_norm[0] == 1.0)
     if scenario == 'regular':
         amp_z, amp_y, amp_x = 12.0, 3.5, 1.2
         tz_t = base_tz - amp_z * (z_norm - z_norm[6])
@@ -127,7 +123,6 @@ def generate_dynamic_phantom(scenario='regular', tumor_radius=12.0, nz=70, ny=90
         ty_t = base_ty - amp_y * (y_norm - y_norm[6])
         tx_t = base_tx - amp_x * (x_norm - x_norm[6])
     elif scenario == 'irregular':
-        np.random.seed(42)
         amp_z, amp_y, amp_x = 14.5, 4.2, 1.6
         jitter_z = np.array([0.2, -0.3, 0.4, -0.2, 0.1, -0.1, 0.0, 0.3, -0.4, 0.2])
         jitter_y = 0.3 * jitter_z
@@ -140,11 +135,10 @@ def generate_dynamic_phantom(scenario='regular', tumor_radius=12.0, nz=70, ny=90
 
     for t in range(n_phases):
         vol = np.full((nz, ny, nx), -1000, dtype=np.int16)
-        vol[body_mask] = 30   # Thoracic soft tissue
-        vol[lung_mask] = -750 # Lung parenchyma
-        vol[spine_mask] = 650 # Bone
+        vol[body_mask] = 30
+        vol[lung_mask] = -750
+        vol[spine_mask] = 650
 
-        # Solid spherical tumor (HU ~ +45)
         dist_sq = ((Z - tz_t[t])**2 + (Y - ty_t[t])**2 + (X - tx_t[t])**2)
         tumor_t = dist_sq <= (tumor_radius**2)
         vol[tumor_t] = 45
@@ -152,13 +146,17 @@ def generate_dynamic_phantom(scenario='regular', tumor_radius=12.0, nz=70, ny=90
         volumes[t] = vol
         masks[t] = tumor_t
 
-    spacing = (dz, dy, dx)
     true_centroids = np.column_stack([tz_t, ty_t, tx_t])
-    return volumes, masks, spacing, true_centroids
+    return volumes, masks, (dz, dy, dx), true_centroids
 
 def segment_and_track_centroids(volumes, spacing):
     """
-    Automated 5-step segmentation and 3D spatial-moment centroid tracking.
+    Automated 5-step segmentation and 3D spatial-moment centroid tracking:
+    Step 1: Thoracic body thresholding (> -500 HU).
+    Step 2: Lung parenchyma windowing ([-1000, -500] HU).
+    Step 3: Morphological hole filling to include embedded tumor (+45 HU).
+    Step 4: Solid tumor windowing ([-300, +150] HU).
+    Step 5: Center-of-mass extraction via spatial moments.
     """
     n_phases = len(volumes)
     dz, dy, dx = spacing
@@ -183,6 +181,7 @@ def segment_and_track_centroids(volumes, spacing):
 def precompute_gtv_offsets(tumor_radius, spacing):
     """
     Precompute relative discrete voxel coordinate offsets for a spherical GTV.
+    Used for ultra-fast vectorized Coverage Ratio (CR) evaluation in Monte Carlo simulations.
     """
     dz, dy, dx = spacing
     rz_max = int(np.ceil(tumor_radius / dz))
@@ -201,7 +200,7 @@ def precompute_gtv_offsets(tumor_radius, spacing):
 
 def build_planning_target_volumes(masks, true_centroids, spacing, tumor_radius=12.0, ref_phase=6):
     """
-    Build frozen PTV masks from the Planning 4D-CT (regular breathing).
+    Construct frozen Planning Target Volumes (PTVs) on the regular 4D-CT acquisition dataset.
     """
     n_phases = len(masks)
     nz, ny, nx = masks[0].shape
@@ -214,13 +213,12 @@ def build_planning_target_volumes(masks, true_centroids, spacing, tumor_radius=1
     x_coords = np.arange(nx) * dx
     Z, Y, X = np.meshgrid(z_coords, y_coords, x_coords, indexing='ij')
 
-    # Reference center at T6 (End-Exhale)
     ref_cz, ref_cy, ref_cx = true_centroids[ref_phase]
     dist_ref = np.sqrt((Z - ref_cz)**2 + (Y - ref_cy)**2 + (X - ref_cx)**2)
 
     strategies = {}
 
-    # 1. Isotropic PTV around T6
+    # 1. Isotropic PTV expansions from end-exhalation GTV (T6)
     for m in [2, 3, 5, 8, 10, 12]:
         ptv_mask = dist_ref <= (r0 + m)
         ptv_vol_cc = float(np.sum(ptv_mask) * voxel_vol_cc)
@@ -248,64 +246,74 @@ def build_planning_target_volumes(masks, true_centroids, spacing, tumor_radius=1
             'pass_threshold_95': bool(min(coverages) >= 95.0)
         }
 
-    # 2. Internal Target Volume (ITV) + Setup Margins
-    dist_itv_surface = np.min([
-        np.sqrt((Z - true_centroids[p, 0])**2 + (Y - true_centroids[p, 1])**2 + (X - true_centroids[p, 2])**2) - r0
-        for p in range(n_phases)
-    ], axis=0)
+    # 2. Internal Target Volume (ITV) approach
+    itv_base = np.zeros_like(masks[0], dtype=bool)
+    for m in masks:
+        itv_base |= m
 
     for setup_m in [0, 2, 3, 4, 5]:
-        ptv_itv_mask = dist_itv_surface <= setup_m
-        vol_cc = float(np.sum(ptv_itv_mask) * voxel_vol_cc)
+        if setup_m == 0:
+            itv_ptv = itv_base.copy()
+            key = "ITV"
+        else:
+            dist_itv = ndi.distance_transform_edt(~itv_base, sampling=spacing)
+            itv_ptv = dist_itv <= setup_m
+            key = f"ITV + {setup_m}mm setup"
 
+        ptv_vol_cc = float(np.sum(itv_ptv) * voxel_vol_cc)
         coverages = []
         for t in range(n_phases):
             gtv_t = masks[t]
-            cr = (np.sum(gtv_t & ptv_itv_mask) / np.sum(gtv_t)) * 100.0
+            gtv_vol = np.sum(gtv_t)
+            overlap = np.sum(gtv_t & itv_ptv)
+            cr = (overlap / gtv_vol) * 100.0 if gtv_vol > 0 else 0.0
             coverages.append(float(cr))
 
-        name = "ITV" if setup_m == 0 else f"ITV + {setup_m}mm setup"
-        strategies[name] = {
+        strategies[key] = {
             'type': 'itv',
             'setup_margin_mm': setup_m,
-            'mask': ptv_itv_mask,
-            'ptv_volume_cc': vol_cc,
+            'mask': itv_ptv,
+            'ptv_volume_cc': ptv_vol_cc,
             'coverages': coverages,
             'min_coverage': float(min(coverages)),
             'mean_coverage': float(np.mean(coverages)),
             'pass_threshold_95': bool(min(coverages) >= 95.0)
         }
 
-    # 3. Anisotropic PTV around Mid-Position
+    # 3. Anisotropic Mid-position PTV expansions
     mid_cz = float(np.mean(true_centroids[:, 0]))
     mid_cy = float(np.mean(true_centroids[:, 1]))
     mid_cx = float(np.mean(true_centroids[:, 2]))
+
     p2p_z = float(np.max(true_centroids[:, 0]) - np.min(true_centroids[:, 0]))
     p2p_y = float(np.max(true_centroids[:, 1]) - np.min(true_centroids[:, 1]))
     p2p_x = float(np.max(true_centroids[:, 2]) - np.min(true_centroids[:, 2]))
 
     for setup_m in [2, 3, 4]:
-        Rz = r0 + p2p_z / 2.0 + setup_m
-        Ry = r0 + p2p_y / 2.0 + setup_m
-        Rx = r0 + p2p_x / 2.0 + setup_m
+        R_z = r0 + (p2p_z / 2.0) + setup_m
+        R_y = r0 + (p2p_y / 2.0) + setup_m
+        R_x = r0 + (p2p_x / 2.0) + setup_m
 
-        ellip_dist = ((Z - mid_cz) / Rz)**2 + ((Y - mid_cy) / Ry)**2 + ((X - mid_cx) / Rx)**2
-        aniso_mask = ellip_dist <= 1.0
-        vol_cc = float(np.sum(aniso_mask) * voxel_vol_cc)
+        aniso_mask = (((Z - mid_cz) / R_z)**2 + 
+                      ((Y - mid_cy) / R_y)**2 + 
+                      ((X - mid_cx) / R_x)**2) <= 1.0
 
+        ptv_vol_cc = float(np.sum(aniso_mask) * voxel_vol_cc)
         coverages = []
         for t in range(n_phases):
             gtv_t = masks[t]
-            cr = (np.sum(gtv_t & aniso_mask) / np.sum(gtv_t)) * 100.0
+            gtv_vol = np.sum(gtv_t)
+            overlap = np.sum(gtv_t & aniso_mask)
+            cr = (overlap / gtv_vol) * 100.0 if gtv_vol > 0 else 0.0
             coverages.append(float(cr))
 
-        name = f"Anisotropic (Mid-pos + {setup_m}mm setup)"
-        strategies[name] = {
+        key = f"Anisotropic (Mid-pos + {setup_m}mm setup)"
+        strategies[key] = {
             'type': 'anisotropic',
             'setup_margin_mm': setup_m,
-            'semi_axes': (float(Rz), float(Ry), float(Rx)),
+            'semi_axes_mm': [R_z, R_y, R_x],
             'mask': aniso_mask,
-            'ptv_volume_cc': vol_cc,
+            'ptv_volume_cc': ptv_vol_cc,
             'coverages': coverages,
             'min_coverage': float(min(coverages)),
             'mean_coverage': float(np.mean(coverages)),
@@ -329,11 +337,18 @@ def evaluate_fast_cr(ptv_mask, centroids_traj, rel_vox_coords, spacing, grid_sha
     crs = np.zeros(len(centroids_traj))
 
     for p in range(len(centroids_traj)):
-        cz, cy, cx = centers_vox[p]
-        z_idx = np.clip(cz + rel_z, 0, nz - 1)
-        y_idx = np.clip(cy + rel_y, 0, ny - 1)
-        x_idx = np.clip(cx + rel_x, 0, nx - 1)
-        crs[p] = (np.sum(ptv_mask[z_idx, y_idx, x_idx]) / n_vox) * 100.0
+        cz_v, cy_v, cx_v = centers_vox[p]
+        zv = cz_v + rel_z
+        yv = cy_v + rel_y
+        xv = cx_v + rel_x
+
+        valid = (zv >= 0) & (zv < nz) & (yv >= 0) & (yv < ny) & (xv >= 0) & (xv < nx)
+        zv = zv[valid]
+        yv = yv[valid]
+        xv = xv[valid]
+
+        in_ptv = np.sum(ptv_mask[zv, yv, xv])
+        crs[p] = (in_ptv / n_vox) * 100.0
 
     return crs
 
@@ -376,10 +391,127 @@ def generate_trajectory(scenario, amp_z, amp_y, amp_x, base_pos, drift=(0.0, 0.0
 
     return np.column_stack([tz_t, ty_t, tx_t])
 
+def evaluate_multi_tumor_radii(spacing):
+    """
+    Phase 1: Multi-Lesion Spatial Sensitivity Analysis (r = 8, 12, 16 mm).
+    """
+    radii = [8.0, 12.0, 16.0]
+    results = {}
+    voxel_vol_cc = (spacing[0] * spacing[1] * spacing[2]) / 1000.0
+
+    for r in radii:
+        vols, masks, _, gt = generate_dynamic_phantom(scenario='regular', tumor_radius=r)
+        tracked, _ = segment_and_track_centroids(vols, spacing)
+        err_3d = np.sqrt(np.sum((tracked - gt)**2, axis=1))
+
+        gtv_voxels = np.sum(masks[6])
+        gtv_vol_cc = float(gtv_voxels * voxel_vol_cc)
+        analytic_vol_cc = float((4.0 / 3.0) * np.pi * (r**3) / 1000.0)
+
+        key = f"r_{int(r)}mm"
+        results[key] = {
+            'radius_mm': r,
+            'diameter_mm': 2.0 * r,
+            'gtv_volume_cc': gtv_vol_cc,
+            'analytic_gtv_cc': analytic_vol_cc,
+            'vol_diff_pct': ((gtv_vol_cc - analytic_vol_cc) / analytic_vol_cc) * 100.0,
+            'tracking_mae_3d': float(np.mean(err_3d)),
+            'tracking_max_3d': float(np.max(err_3d)),
+            'tracking_mae_z': float(np.mean(np.abs(tracked[:, 0] - gt[:, 0]))),
+            'tracking_mae_y': float(np.mean(np.abs(tracked[:, 1] - gt[:, 1]))),
+            'tracking_mae_x': float(np.mean(np.abs(tracked[:, 2] - gt[:, 2])))
+        }
+
+    return results
+
+def evaluate_multi_tumor_robustness(spacing, grid_shape, base_pos, n_mc=2000, n_patients=200, seed=123):
+    """
+    Evaluate planning coverage, irregular MC pass rate, and setup uncertainty across lesion radii:
+    r = 8 mm (small nodule, 2.1 cc)
+    r = 12 mm (nominal, 7.2 cc)
+    r = 16 mm (large lesion, 17.2 cc)
+    """
+    print("\n[PHASE 1B] Multi-Lesion Robustness Analysis (r = 8, 12, 16 mm)...")
+    radii = [8.0, 12.0, 16.0]
+    multi_res = {}
+
+    for r in radii:
+        print(f"  Testing lesion r = {r:.1f} mm...")
+        _, masks_r, _, gt_r = generate_dynamic_phantom(scenario='regular', tumor_radius=r)
+        strats_r = build_planning_target_volumes(masks_r, gt_r, spacing, tumor_radius=r, ref_phase=6)
+        rel_vox_r = precompute_gtv_offsets(r, spacing)
+
+        r_eval = {}
+        for target in ['ITV + 3mm setup', 'ITV + 5mm setup']:
+            mask = strats_r[target]['mask']
+            ptv_vol = strats_r[target]['ptv_volume_cc']
+            plan_cr = strats_r[target]['min_coverage']
+
+            # MC irregular test (N=n_mc)
+            np.random.seed(seed)
+            min_crs = np.zeros(n_mc)
+            for c in range(n_mc):
+                az = max(6.0, np.random.normal(14.5, 1.5))
+                ay = max(1.5, np.random.normal(4.2, 0.5))
+                ax = max(0.5, np.random.normal(1.6, 0.2))
+                drift = (np.random.normal(0, 1.5), np.random.normal(0, 0.6), np.random.normal(0, 0.3))
+                traj = generate_trajectory('irregular', az, ay, ax, base_pos, drift=drift, jitter_scale=0.5)
+                crs = evaluate_fast_cr(mask, traj, rel_vox_r, spacing, grid_shape)
+                min_crs[c] = np.min(crs)
+
+            mc_pass = float(np.mean(min_crs >= 95.0) * 100.0)
+            mc_ci = wilson_score_interval(mc_pass, n_mc)
+
+            # SBRT 5-fx setup simulation (N=n_patients)
+            np.random.seed(seed + 1)
+            p_passes_5fx = 0
+            f_passes_5fx = 0
+            for p in range(n_patients):
+                S = np.random.normal(0, 2.0, size=3)
+                p_ok = True
+                for f in range(5):
+                    R = np.random.normal(0, 2.0, size=3)
+                    net_shift = S + R
+                    az = max(6.0, np.random.normal(12.0, 1.0))
+                    ay = max(1.5, np.random.normal(3.5, 0.3))
+                    ax = max(0.5, np.random.normal(1.2, 0.1))
+                    traj = generate_trajectory('regular', az, ay, ax, base_pos, drift=net_shift, jitter_scale=0.1)
+                    crs = evaluate_fast_cr(mask, traj, rel_vox_r, spacing, grid_shape)
+                    if np.min(crs) >= 95.0:
+                        f_passes_5fx += 1
+                    else:
+                        p_ok = False
+                if p_ok:
+                    p_passes_5fx += 1
+
+            sbrt5_all_pass = (p_passes_5fx / n_patients) * 100.0
+            sbrt5_ci = wilson_score_interval(sbrt5_all_pass, n_patients)
+            sbrt5_frac_pass = (f_passes_5fx / (n_patients * 5)) * 100.0
+
+            r_eval[target] = {
+                'ptv_volume_cc': ptv_vol,
+                'plan_min_cr': plan_cr,
+                'mc_irreg_pass_pct': mc_pass,
+                'mc_irreg_wilson_ci_95': mc_ci,
+                'sbrt5_all_pass_pct': sbrt5_all_pass,
+                'sbrt5_all_pass_wilson_ci_95': sbrt5_ci,
+                'sbrt5_frac_pass_pct': sbrt5_frac_pass
+            }
+
+        key = f"r_{int(r)}mm"
+        analytic_gtv = float((4.0 / 3.0) * np.pi * (r**3) / 1000.0)
+        multi_res[key] = {
+            'radius_mm': r,
+            'gtv_volume_cc': analytic_gtv,
+            'targets': r_eval
+        }
+
+    return multi_res
+
 def run_monte_carlo_robustness(strategies, rel_vox_coords, spacing, grid_shape, base_pos, n_cycles=5000, seed=42):
     """
     Perform Monte Carlo robustness evaluation over N=5000 independent unseen breathing cycles.
-    Computes both the exact Wilson score 95% CI for binomial pass rates and the empirical
+    Computes both the 95% Wilson score CI for binomial pass rates and the empirical
     95% inter-percentile range [P2.5, P97.5] for minimum coverage ratios.
     """
     np.random.seed(seed)
@@ -391,7 +523,7 @@ def run_monte_carlo_robustness(strategies, rel_vox_coords, spacing, grid_shape, 
         'Anisotropic (Mid-pos + 2mm setup)', 'Anisotropic (Mid-pos + 3mm setup)', 'Anisotropic (Mid-pos + 4mm setup)'
     ]
 
-    # ── Test A: Regular Unseen (N=5000) ──────────────────────────────────
+    # Test A: Regular Unseen (N=5000)
     print(f"  [MC Test A] Evaluating {n_cycles} unseen regular respiration cycles...")
     min_crs_reg = {k: np.zeros(n_cycles) for k in target_names}
 
@@ -420,7 +552,7 @@ def run_monte_carlo_robustness(strategies, rel_vox_coords, spacing, grid_shape, 
             'pct_pass_wilson_ci_95': wilson_score_interval(pct_pass, n_cycles)
         }
 
-    # ── Test B: Irregular + Drift (N=5000) ────────────────────────────────
+    # Test B: Irregular + Drift (N=5000)
     print(f"  [MC Test B] Evaluating {n_cycles} irregular respiration cycles with baseline drift...")
     min_crs_irr = {k: np.zeros(n_cycles) for k in target_names}
 
@@ -449,7 +581,7 @@ def run_monte_carlo_robustness(strategies, rel_vox_coords, spacing, grid_shape, 
             'pct_pass_wilson_ci_95': wilson_score_interval(pct_pass, n_cycles)
         }
 
-    # ── Test C: Amplitude Stress Test ────────────────────────────────────
+    # Test C: Amplitude Stress Test
     print("  [MC Test C] Evaluating motion amplitude sensitivity (10 to 22 mm)...")
     amp_levels = [10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0]
     results['amplitude_sensitivity'] = {str(a): {} for a in amp_levels}
@@ -482,10 +614,11 @@ def run_monte_carlo_robustness(strategies, rel_vox_coords, spacing, grid_shape, 
     return results
 
 def simulate_regimen(strategies, rel_vox_coords, spacing, grid_shape, base_pos,
-                     n_patients, n_fractions, Sigma_setup=2.0, sigma_setup=2.0, seed=42):
+                     n_patients=200, n_fractions=30, Sigma_setup=2.0, sigma_setup=2.0, seed=42):
     """
     Simulate a specific fractionation regimen across virtual patients.
-    Reports fraction pass rate (Wilson CI), all-fraction success rate, and course-averaged success.
+    Fixed systematic error S_i per patient across all fractions; independent random error R_{i,f} per fraction.
+    Reports 95% Wilson CIs for both fraction-pass rates and patient-level success rates.
     """
     np.random.seed(seed)
     target_names = [
@@ -537,9 +670,7 @@ def simulate_regimen(strategies, rel_vox_coords, spacing, grid_shape, base_pos,
         p_passes = patient_fraction_passes[k]
         f_pass_pct = float(np.mean(f_arr >= 95.0) * 100.0)
 
-        # All-fraction success: patient has 100% of fractions passing
         all_pass_pct = float(np.mean(p_passes == n_fractions) * 100.0)
-        # Course-averaged success: patient has >= 90% of fractions passing
         course_pass_pct = float(np.mean((p_passes / n_fractions) >= 0.90) * 100.0)
 
         results[k] = {
@@ -559,24 +690,25 @@ def simulate_regimen(strategies, rel_vox_coords, spacing, grid_shape, base_pos,
 
     return results
 
-def run_multi_regimen_setup_uncertainty(strategies, rel_vox_coords, spacing, grid_shape, base_pos, seed=42):
+def run_multi_regimen_setup_uncertainty(strategies, rel_vox_coords, spacing, grid_shape, base_pos, n_patients=200, seed=42):
     """
-    Run setup uncertainty simulations across 3 clinical regimens:
-    1. SBRT 3 Fractions (e.g. 3 x 18 Gy = 54 Gy)
-    2. SBRT 5 Fractions (e.g. 5 x 10 Gy = 50 Gy)
-    3. CFRT 30 Fractions (e.g. 30 x 2 Gy = 60 Gy)
+    Run setup uncertainty simulations across 3 clinical regimens with N_pat = 200 virtual patients:
+    1. SBRT 3 Fractions (e.g. 3 x 18 Gy = 54 Gy) -> 600 sessions
+    2. SBRT 5 Fractions (e.g. 5 x 10 Gy = 50 Gy) -> 1,000 sessions
+    3. CFRT 30 Fractions (e.g. 30 x 2 Gy = 60 Gy) -> 6,000 sessions
+    Total = 7,600 simulated treatment sessions.
     """
-    print("  [Setup Simulation] Simulating SBRT 3-fraction course (50 patients x 3 fx = 150 sessions)...")
+    print(f"  [Setup Simulation] Simulating SBRT 3-fraction course ({n_patients} patients x 3 fx = {n_patients*3} sessions)...")
     res_sbrt3 = simulate_regimen(strategies, rel_vox_coords, spacing, grid_shape, base_pos,
-                                 n_patients=50, n_fractions=3, seed=seed)
+                                 n_patients=n_patients, n_fractions=3, seed=seed)
 
-    print("  [Setup Simulation] Simulating SBRT 5-fraction course (50 patients x 5 fx = 250 sessions)...")
+    print(f"  [Setup Simulation] Simulating SBRT 5-fraction course ({n_patients} patients x 5 fx = {n_patients*5} sessions)...")
     res_sbrt5 = simulate_regimen(strategies, rel_vox_coords, spacing, grid_shape, base_pos,
-                                 n_patients=50, n_fractions=5, seed=seed+1)
+                                 n_patients=n_patients, n_fractions=5, seed=seed+1)
 
-    print("  [Setup Simulation] Simulating Conventional 30-fraction course (50 patients x 30 fx = 1500 sessions)...")
+    print(f"  [Setup Simulation] Simulating Conventional 30-fraction course ({n_patients} patients x 30 fx = {n_patients*30} sessions)...")
     res_cfrt30 = simulate_regimen(strategies, rel_vox_coords, spacing, grid_shape, base_pos,
-                                  n_patients=50, n_fractions=30, seed=seed+2)
+                                  n_patients=n_patients, n_fractions=30, seed=seed+2)
 
     return {
         'sbrt_3fx': res_sbrt3,
@@ -613,200 +745,192 @@ def calculate_van_herk(amp_z, amp_y, amp_x, Sigma_setup=2.0, sigma_setup=2.0):
     tot_sigma_y = float(np.sqrt(sigma_setup**2 + sigma_motion_y**2))
     tot_sigma_x = float(np.sqrt(sigma_setup**2 + sigma_motion_x**2))
 
-    M_z = 2.5 * Sigma_setup + 0.7 * tot_sigma_z
-    M_y = 2.5 * Sigma_setup + 0.7 * tot_sigma_y
-    M_x = 2.5 * Sigma_setup + 0.7 * tot_sigma_x
+    m_z = float(2.5 * Sigma_setup + 0.7 * tot_sigma_z)
+    m_y = float(2.5 * Sigma_setup + 0.7 * tot_sigma_y)
+    m_x = float(2.5 * Sigma_setup + 0.7 * tot_sigma_x)
 
     return {
         'Sigma_setup': Sigma_setup,
         'sigma_setup': sigma_setup,
         'sigma_motion': {'Z': sigma_motion_z, 'Y': sigma_motion_y, 'X': sigma_motion_x},
         'tot_sigma': {'Z': tot_sigma_z, 'Y': tot_sigma_y, 'X': tot_sigma_x},
-        'margin_van_herk': {'Z': M_z, 'Y': M_y, 'X': M_x}
+        'margin_van_herk': {'Z': m_z, 'Y': m_y, 'X': m_x}
     }
 
-def evaluate_multi_tumor_radii(spacing, radii=[8.0, 12.0, 16.0]):
+def generate_publication_figures(results, out_dir):
     """
-    Evaluate phantom tracking accuracy and PTV volume scaling across 3 tumor sizes:
-    - Small: r=8 mm (diameter 16 mm, V ~ 2.14 cc)
-    - Nominal: r=12 mm (diameter 24 mm, V ~ 7.24 cc)
-    - Large: r=16 mm (diameter 32 mm, V ~ 17.16 cc)
+    Generate all 6 publication figures (200 DPI).
+    Figures 3, 5, 6 feature unclipped 0-105% axes.
+    Figure 5 is a 2-panel figure distinguishing Wilson CIs from empirical CR ranges.
+    Figure 6 features rotated X-axis labels to prevent label crowding.
     """
-    results = {}
-    for r in radii:
-        vols, masks, sp, gt_centroids = generate_dynamic_phantom(scenario='regular', tumor_radius=r)
-        tracked, _ = segment_and_track_centroids(vols, sp)
-        err_3d = np.sqrt(np.sum((tracked - gt_centroids)**2, axis=1))
-
-        v_gtv = (4.0 / 3.0) * np.pi * (r**3) / 1000.0
-
-        # Build planning PTVs for this radius
-        strats = build_planning_target_volumes(masks, gt_centroids, sp, tumor_radius=r, ref_phase=6)
-
-        results[f"r_{int(r)}mm"] = {
-            'radius_mm': float(r),
-            'diameter_mm': float(2 * r),
-            'gtv_volume_cc': float(v_gtv),
-            'tracking_mae_3d': float(np.mean(err_3d)),
-            'tracking_max_3d': float(np.max(err_3d)),
-            'itv3_vol_cc': strats['ITV + 3mm setup']['ptv_volume_cc'],
-            'itv5_vol_cc': strats['ITV + 5mm setup']['ptv_volume_cc'],
-            'aniso2_vol_cc': strats['Anisotropic (Mid-pos + 2mm setup)']['ptv_volume_cc']
-        }
-    return results
-
-def generate_figures(results, out_dir):
-    """
-    Generate 6 high-resolution publication-quality figures with unclipped axes (0 to 105%).
-    """
-    try:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-    except ImportError:
+    if not HAS_MATPLOTLIB:
         print("[WARNING] matplotlib not available — skipping figure generation.")
         return
 
     os.makedirs(out_dir, exist_ok=True)
-    phases = np.arange(10)
-    phase_labels = [f'T{i}' for i in range(10)]
+    plt.rcParams['font.sans-serif'] = 'Helvetica', 'Arial', 'DejaVu Sans'
+    plt.rcParams['axes.edgecolor'] = '#334155'
+    plt.rcParams['axes.linewidth'] = 0.8
 
-    # ── Figure 1: Phantom Anatomy ──────────────────────────────────────────
-    vols, masks, spacing, _ = generate_dynamic_phantom(scenario='regular')
-    nz, ny, nx = vols[0].shape
-    dz, dy, dx = spacing
+    # Figure 1: Synthetic Thorax Phantom Anatomy
+    dz, dy, dx = 2.0, 1.5, 1.5
+    vols, _, _, _ = generate_dynamic_phantom(scenario='regular', tumor_radius=12.0)
+    vol_t0 = vols[0]
 
-    fig1, axes = plt.subplots(1, 2, figsize=(11, 5))
-    fig1.suptitle('Figure 1: Synthetic Anthropomorphic Thorax Phantom — Tissue HU Distribution', fontsize=12, fontweight='bold')
+    fig1, ax1 = plt.subplots(1, 2, figsize=(11, 5))
+    fig1.suptitle('Figure 1: Anthropomorphic Synthetic Thorax Phantom Geometry & Tissue HU Distribution (T0 Peak Inhalation)',
+                  fontsize=12, fontweight='bold', y=0.98)
 
-    y_mid = ny // 2
-    img_cor = vols[0][:, y_mid, :]
-    im1 = axes[0].imshow(img_cor, cmap='gray', vmin=-1000, vmax=400,
-                         extent=[0, nx*dx, nz*dz, 0], aspect='auto')
-    axes[0].set_title('Coronal Slice (T0 — Peak Inhalation)', fontsize=10)
-    axes[0].set_xlabel('LR (mm)'); axes[0].set_ylabel('SI (mm)')
-    plt.colorbar(im1, ax=axes[0], label='HU')
+    coronal_slice = vol_t0[:, 40, :]
+    im0 = ax1[0].imshow(coronal_slice, cmap='bone', aspect=dz/dx, origin='lower',
+                        extent=[0, coronal_slice.shape[1]*dx, 0, coronal_slice.shape[0]*dz])
+    ax1[0].set_title('(A) Coronal View (SI vs LR)', fontsize=11, fontweight='bold')
+    ax1[0].set_xlabel('Left-Right (mm)', fontsize=10)
+    ax1[0].set_ylabel('Superior-Inferior (mm)', fontsize=10)
+    plt.colorbar(im0, ax=ax1[0], fraction=0.046, pad=0.04, label='Hounsfield Units (HU)')
 
-    z_tumor = int(nz // 2)
-    img_ax = vols[0][z_tumor, :, :]
-    im2 = axes[1].imshow(img_ax, cmap='gray', vmin=-1000, vmax=400,
-                         extent=[0, nx*dx, ny*dy, 0], aspect='auto')
-    axes[1].set_title('Axial Slice (T0 — Lesion Level)', fontsize=10)
-    axes[1].set_xlabel('LR (mm)'); axes[1].set_ylabel('AP (mm)')
-    plt.colorbar(im2, ax=axes[1], label='HU')
+    axial_slice = vol_t0[25, :, :]
+    im1 = ax1[1].imshow(axial_slice, cmap='bone', aspect=dy/dx, origin='lower',
+                        extent=[0, axial_slice.shape[1]*dx, 0, axial_slice.shape[0]*dy])
+    ax1[1].set_title('(B) Axial View (AP vs LR)', fontsize=11, fontweight='bold')
+    ax1[1].set_xlabel('Left-Right (mm)', fontsize=10)
+    ax1[1].set_ylabel('Anterior-Posterior (mm)', fontsize=10)
+    plt.colorbar(im1, ax=ax1[1], fraction=0.046, pad=0.04, label='Hounsfield Units (HU)')
 
     fig1.tight_layout()
     fig1.savefig(os.path.join(out_dir, 'fig1_phantom.png'), dpi=200, bbox_inches='tight')
     plt.close(fig1)
     print("  [Fig 1] Phantom anatomy saved.")
 
-    # ── Figure 2: Centroid Trajectories ───────────────────────────────────
-    colors_sc = {'regular': '#2563eb', 'deep': '#dc2626', 'irregular': '#16a34a'}
-    labels_sc = {'regular': 'Regular (Az=12mm)', 'deep': 'Deep (Az=22mm)', 'irregular': 'Irregular (Az=14.5mm)'}
-
-    fig2, ax2s = plt.subplots(1, 3, figsize=(14, 4))
-    fig2.suptitle('Figure 2: 3D Tumor Centroid Trajectories (Reference: T6 End-Exhalation, 60:40 Cycle)',
+    # Figure 2: Centroid Trajectories & Reference Phase
+    fig2, ax2 = plt.subplots(1, 3, figsize=(15, 4.2))
+    fig2.suptitle('Figure 2: 3D Tumor Kinematic Trajectories Across 10 4D-CT Phases (T6 = End-Exhalation Reference)',
                   fontsize=12, fontweight='bold')
-    directions = [('SI (Z)', 0), ('AP (Y)', 1), ('LR (X)', 2)]
 
-    for ax_i, (dir_label, dim) in enumerate(directions):
-        ax = ax2s[ax_i]
-        for sc in ['regular', 'deep', 'irregular']:
-            gt = np.array(results['scenarios'][sc]['gt_centroids'])
-            disp = gt[:, dim] - gt[6, dim]
-            ax.plot(phases, disp, 'o-', color=colors_sc[sc], label=labels_sc[sc], linewidth=2, markersize=5)
-        ax.axvline(x=6, color='black', linestyle='--', alpha=0.7, label='T6: End-Exhale Ref')
-        ax.axhline(y=0, color='gray', linestyle=':', alpha=0.5)
-        ax.set_title(f'{dir_label} Displacement', fontsize=10)
-        ax.set_xlabel('Phase Index'); ax.set_ylabel('Displacement from T6 (mm)')
-        ax.set_xticks(phases); ax.set_xticklabels(phase_labels, fontsize=8)
-        if ax_i == 0:
-            ax.legend(fontsize=8)
+    sc_reg = np.array(results['scenarios']['regular']['centroids_true'])
+    phases = np.arange(10)
+
+    ax2[0].plot(phases, sc_reg[:, 0] - sc_reg[6, 0], 'o-', color='#dc2626', label='SI (Δz, mm)', linewidth=2)
+    ax2[0].plot(phases, sc_reg[:, 1] - sc_reg[6, 1], 's-', color='#2563eb', label='AP (Δy, mm)', linewidth=2)
+    ax2[0].plot(phases, sc_reg[:, 2] - sc_reg[6, 2], '^-', color='#16a34a', label='LR (Δx, mm)', linewidth=2)
+    ax2[0].axvline(x=6, color='black', linestyle='--', alpha=0.7, label='T6 End-Exhale')
+    ax2[0].set_xlabel('4D-CT Phase Bin (T0 to T9)', fontsize=10)
+    ax2[0].set_ylabel('Displacement Relative to T6 (mm)', fontsize=10)
+    ax2[0].set_xticks(phases)
+    ax2[0].set_xticklabels([f'T{i}' for i in range(10)])
+    ax2[0].legend(fontsize=8, loc='upper right')
+    ax2[0].grid(True, linestyle=':', alpha=0.6)
+    ax2[0].set_title('(A) 1D Displacement vs Phase Bin', fontsize=10)
+
+    ax2[1].plot(sc_reg[:, 1] - sc_reg[6, 1], sc_reg[:, 0] - sc_reg[6, 0], 'o-', color='#7c3aed', linewidth=2)
+    for p in [0, 3, 6, 8]:
+        ax2[1].annotate(f'T{p}', (sc_reg[p, 1] - sc_reg[6, 1], sc_reg[p, 0] - sc_reg[6, 0] + 0.3),
+                        fontsize=9, fontweight='bold')
+    ax2[1].set_xlabel('Anterior-Posterior Displacement (mm)', fontsize=10)
+    ax2[1].set_ylabel('Superior-Inferior Displacement (mm)', fontsize=10)
+    ax2[1].set_title('(B) 2D Hysteresis Loop (SI vs AP)', fontsize=10)
+    ax2[1].grid(True, linestyle=':', alpha=0.6)
+
+    radii_data = results['multi_radii']
+    r_labels = ['r = 8 mm\n(2.1 cc)', 'r = 12 mm\n(7.2 cc)', 'r = 16 mm\n(17.2 cc)']
+    maes = [radii_data[k]['tracking_mae_3d'] for k in ['r_8mm', 'r_12mm', 'r_16mm']]
+    maxs = [radii_data[k]['tracking_max_3d'] for k in ['r_8mm', 'r_12mm', 'r_16mm']]
+
+    x = np.arange(len(r_labels))
+    w = 0.35
+    ax2[2].bar(x - w/2, maes, w, label='3D MAE (mm)', color='#0ea5e9')
+    ax2[2].bar(x + w/2, maxs, w, label='Max 3D Error (mm)', color='#f97316')
+    ax2[2].set_ylabel('Tracking Error (mm)', fontsize=10)
+    ax2[2].set_xticks(x)
+    ax2[2].set_xticklabels(r_labels, fontsize=9)
+    ax2[2].set_ylim(0, 0.16)
+    ax2[2].legend(fontsize=8)
+    ax2[2].grid(True, axis='y', linestyle=':', alpha=0.6)
+    ax2[2].set_title('(C) Sub-Voxel Tracking Error vs Lesion Size', fontsize=10)
 
     fig2.tight_layout()
     fig2.savefig(os.path.join(out_dir, 'fig2_trajectory.png'), dpi=200, bbox_inches='tight')
     plt.close(fig2)
     print("  [Fig 2] Trajectory plot saved.")
 
-    # ── Figure 3: True Dynamic Coverage vs Phase (Unclipped Axis: 0 to 105%) ──
-    fig3, ax3s = plt.subplots(1, 2, figsize=(14, 5))
-    fig3.suptitle('Figure 3: Geometric Coverage Ratio vs Respiratory Phase (Unclipped Axis: 0–105%)',
+    # Figure 3: Coverage Rate vs Phase (Unclipped Axis: 0 to 105%)
+    fig3, ax3 = plt.subplots(1, 2, figsize=(14, 5))
+    fig3.suptitle('Figure 3: Geometric Coverage Ratio vs Phase on Planning 4D-CT (Unclipped Axis: 0 to 105%)',
                   fontsize=12, fontweight='bold')
 
-    plan_strats = results['planning_strategies']
-    plot_items = [
-        ('Isotropic 5mm', '#dc2626', '--', 'o'),
-        ('Isotropic 12mm', '#f59e0b', '--', 's'),
-        ('ITV + 3mm setup', '#16a34a', '-', 'D'),
-        ('ITV + 5mm setup', '#059669', '-', '^'),
-        ('Anisotropic (Mid-pos + 2mm setup)', '#2563eb', '-', 'v')
+    plan = results['planning_strategies']
+    deep_eval = results['scenarios']['deep']['evaluated_planning_ptvs']
+
+    curves = [
+        ('Isotropic 5mm', '#dc2626', 'o', '--'),
+        ('Isotropic 12mm', '#f59e0b', 's', '--'),
+        ('ITV + 2mm setup', '#d97706', '^', '-'),
+        ('ITV + 3mm setup', '#16a34a', 'D', '-'),
+        ('ITV + 5mm setup', '#059669', 'p', '-'),
+        ('Anisotropic (Mid-pos + 2mm setup)', '#2563eb', 'v', '-')
     ]
 
-    # Subplot 1: Regular Planning Respiration
-    for name, col, ls, mk in plot_items:
-        covs = plan_strats[name]['coverages']
-        ax3s[0].plot(phases, covs, linestyle=ls, color=col, marker=mk, label=name, linewidth=2, markersize=5)
-    ax3s[0].axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Threshold')
-    ax3s[0].axvline(x=6, color='black', linestyle='--', alpha=0.6, label='T6 End-Exhale')
-    ax3s[0].set_ylim(0, 105)  # UNCLIPPED AXIS
-    ax3s[0].set_title('Regular Respiration (Az = 12 mm)', fontsize=10)
-    ax3s[0].set_xlabel('Phase Index'); ax3s[0].set_ylabel('Coverage Ratio (%)')
-    ax3s[0].set_xticks(phases); ax3s[0].set_xticklabels(phase_labels, fontsize=8)
-    ax3s[0].legend(fontsize=8, loc='lower left')
-    ax3s[0].grid(True, linestyle=':', alpha=0.5)
+    for name, col, mk, ls in curves:
+        ax3[0].plot(phases, plan[name]['coverages'], linestyle=ls, color=col, marker=mk, label=name, linewidth=1.8, markersize=5)
+    ax3[0].axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Surrogate Threshold')
+    ax3[0].set_xlabel('4D-CT Phase Bin', fontsize=10)
+    ax3[0].set_ylabel('Coverage Ratio (%)', fontsize=10)
+    ax3[0].set_ylim(0, 105)
+    ax3[0].set_xticks(phases)
+    ax3[0].set_xticklabels([f'T{i}' for i in range(10)])
+    ax3[0].set_title('(A) Planning Coverage: Regular Respiration (Az = 12 mm)', fontsize=10)
+    ax3[0].legend(fontsize=8, loc='lower left')
+    ax3[0].grid(True, linestyle=':', alpha=0.6)
 
-    # Subplot 2: Deep Breathing Evaluation with Frozen Planning PTVs
-    deep_strats = results['scenarios']['deep']['evaluated_planning_ptvs']
-    for name, col, ls, mk in plot_items:
-        covs = deep_strats[name]['coverages']
-        ax3s[1].plot(phases, covs, linestyle=ls, color=col, marker=mk, label=name, linewidth=2, markersize=5)
-    ax3s[1].axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Threshold')
-    ax3s[1].axvline(x=6, color='black', linestyle='--', alpha=0.6, label='T6 End-Exhale')
-    ax3s[1].set_ylim(0, 105)  # UNCLIPPED AXIS: Shows collapse of Isotropic 5mm to 11.7%
-    ax3s[1].set_title('Deep Breathing Stress (Az = 22 mm)', fontsize=10)
-    ax3s[1].set_xlabel('Phase Index'); ax3s[1].set_ylabel('Coverage Ratio (%)')
-    ax3s[1].set_xticks(phases); ax3s[1].set_xticklabels(phase_labels, fontsize=8)
-    ax3s[1].legend(fontsize=8, loc='lower left')
-    ax3s[1].grid(True, linestyle=':', alpha=0.5)
+    for name, col, mk, ls in curves:
+        ax3[1].plot(phases, deep_eval[name]['coverages'], linestyle=ls, color=col, marker=mk, label=name, linewidth=1.8, markersize=5)
+    ax3[1].axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Surrogate Threshold')
+    ax3[1].set_xlabel('4D-CT Phase Bin', fontsize=10)
+    ax3[1].set_ylabel('Coverage Ratio (%)', fontsize=10)
+    ax3[1].set_ylim(0, 105)
+    ax3[1].set_xticks(phases)
+    ax3[1].set_xticklabels([f'T{i}' for i in range(10)])
+    ax3[1].set_title('(B) Stress Test on Frozen PTVs: Deep Respiration (Az = 22 mm)', fontsize=10)
+    ax3[1].legend(fontsize=8, loc='lower left')
+    ax3[1].grid(True, linestyle=':', alpha=0.6)
 
     fig3.tight_layout()
     fig3.savefig(os.path.join(out_dir, 'fig3_coverage.png'), dpi=200, bbox_inches='tight')
     plt.close(fig3)
     print("  [Fig 3] Coverage rate plot (unclipped 0-105%) saved.")
 
-    # ── Figure 4: Tradeoff PTV Volume vs Min CR ────────────────────────────
-    fig4, ax4 = plt.subplots(figsize=(8, 6))
-    fig4.suptitle('Figure 4: PTV Volume vs. Minimum Coverage Ratio Trade-off (Regular Respiration)',
+    # Figure 4: Volume vs Minimum Coverage Trade-off
+    fig4, ax4 = plt.subplots(figsize=(8, 5.5))
+    fig4.suptitle('Figure 4: Trade-off Between Target Volume and Minimum Coverage on Planning 4D-CT',
                   fontsize=12, fontweight='bold')
 
-    iso_keys = [f"Isotropic {m}mm" for m in [2, 3, 5, 8, 10, 12]]
-    iso_vols = [plan_strats[k]['ptv_volume_cc'] for k in iso_keys]
-    iso_crs = [plan_strats[k]['min_coverage'] for k in iso_keys]
-    ax4.plot(iso_vols, iso_crs, 'o--', color='#f59e0b', label='Isotropic Expansions (2-12 mm)', linewidth=2)
-    for m, v, c in zip([2, 3, 5, 8, 10, 12], iso_vols, iso_crs):
-        ax4.annotate(f'{m}mm', (v, c), textcoords='offset points', xytext=(5, 3), fontsize=9)
+    iso_keys = ['Isotropic 2mm', 'Isotropic 3mm', 'Isotropic 5mm', 'Isotropic 8mm', 'Isotropic 10mm', 'Isotropic 12mm']
+    iso_vols = [plan[k]['ptv_volume_cc'] for k in iso_keys]
+    iso_min_crs = [plan[k]['min_coverage'] for k in iso_keys]
+    ax4.plot(iso_vols, iso_min_crs, 'o--', color='#dc2626', label='Isotropic PTV (2-12 mm)', linewidth=2, markersize=7)
+    for k in iso_keys:
+        ax4.annotate(k.replace('Isotropic ', ''), (plan[k]['ptv_volume_cc'] + 0.8, plan[k]['min_coverage'] - 2.5),
+                     fontsize=8, color='#dc2626')
 
-    itv_items = [
-        ('ITV', '#9ca3af', 'o'),
-        ('ITV + 2mm setup', '#6b7280', 's'),
-        ('ITV + 3mm setup', '#16a34a', 'D'),
-        ('ITV + 4mm setup', '#059669', 'P'),
-        ('ITV + 5mm setup', '#047857', '^')
-    ]
-    for k, col, mk in itv_items:
-        ax4.scatter(plan_strats[k]['ptv_volume_cc'], plan_strats[k]['min_coverage'],
-                    color=col, marker=mk, s=110, label=k, zorder=5)
+    itv_keys = ['ITV + 2mm setup', 'ITV + 3mm setup', 'ITV + 4mm setup', 'ITV + 5mm setup']
+    itv_vols = [plan[k]['ptv_volume_cc'] for k in itv_keys]
+    itv_min_crs = [plan[k]['min_coverage'] for k in itv_keys]
+    ax4.plot(itv_vols, itv_min_crs, 's-', color='#16a34a', label='ITV + Setup (2-5 mm)', linewidth=2, markersize=8)
+    for k in itv_keys:
+        ax4.annotate(k.replace(' setup', ''), (plan[k]['ptv_volume_cc'] + 0.8, plan[k]['min_coverage'] - 1.5),
+                     fontsize=8, color='#16a34a')
 
-    aniso_items = [
-        ('Anisotropic (Mid-pos + 2mm setup)', '#2563eb', '*'),
-        ('Anisotropic (Mid-pos + 3mm setup)', '#1d4ed8', 'X'),
-        ('Anisotropic (Mid-pos + 4mm setup)', '#1e3a8a', 'h')
-    ]
-    for k, col, mk in aniso_items:
-        ax4.scatter(plan_strats[k]['ptv_volume_cc'], plan_strats[k]['min_coverage'],
-                    color=col, marker=mk, s=140, label=k.replace('Anisotropic (Mid-pos + ', 'Aniso+').replace('mm setup)', 'mm)'), zorder=5)
+    aniso_keys = ['Anisotropic (Mid-pos + 2mm setup)', 'Anisotropic (Mid-pos + 3mm setup)', 'Anisotropic (Mid-pos + 4mm setup)']
+    aniso_vols = [plan[k]['ptv_volume_cc'] for k in aniso_keys]
+    aniso_min_crs = [plan[k]['min_coverage'] for k in aniso_keys]
+    ax4.plot(aniso_vols, aniso_min_crs, '^-', color='#2563eb', label='Anisotropic Mid-pos (2-4 mm)', linewidth=2, markersize=8)
+    for k in aniso_keys:
+        lbl = k.replace('Anisotropic (Mid-pos + ', 'Aniso+').replace(' setup)', '')
+        ax4.annotate(lbl, (plan[k]['ptv_volume_cc'] + 0.8, plan[k]['min_coverage'] - 2.0),
+                     fontsize=8, color='#2563eb')
 
-    ax4.axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Threshold')
+    ax4.axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Surrogate Threshold')
     ax4.set_xlabel('PTV Volume (cc)', fontsize=11)
     ax4.set_ylabel('Minimum Coverage Ratio (%)', fontsize=11)
     ax4.set_ylim(0, 105)
@@ -818,9 +942,9 @@ def generate_figures(results, out_dir):
     plt.close(fig4)
     print("  [Fig 4] PTV volume vs CR tradeoff saved.")
 
-    # ── Figure 5: Robustness vs Amplitude (Unclipped Axis: 0 to 105%) ───────
-    fig5, ax5 = plt.subplots(figsize=(9, 5))
-    fig5.suptitle('Figure 5: Target Coverage Robustness Across Motion Amplitudes (Az = 10 to 22 mm)',
+    # Figure 5: 2-Panel Robustness vs Amplitude (Wilson CIs vs Empirical Ranges)
+    fig5, (ax5a, ax5b) = plt.subplots(1, 2, figsize=(14, 5))
+    fig5.suptitle('Figure 5: Target Robustness Across Motion Amplitudes (Az = 10 to 22 mm)',
                   fontsize=12, fontweight='bold')
 
     amp_data = results['monte_carlo']['amplitude_sensitivity']
@@ -835,27 +959,49 @@ def generate_figures(results, out_dir):
     ]
 
     for name, col, mk, ls in eval_curves:
+        pass_rates = [amp_data[str(a)][name]['pct_pass_95'] for a in amps]
+        ci_lows = [amp_data[str(a)][name]['pct_pass_wilson_ci_95'][0] for a in amps]
+        ci_highs = [amp_data[str(a)][name]['pct_pass_wilson_ci_95'][1] for a in amps]
+        
+        yerr_lower = np.maximum(0, np.array(pass_rates) - np.array(ci_lows))
+        yerr_upper = np.maximum(0, np.array(ci_highs) - np.array(pass_rates))
+        
+        ax5a.errorbar(amps, pass_rates, yerr=[yerr_lower, yerr_upper], fmt=f'{mk}{ls}', color=col,
+                      label=name.replace(' setup', '').replace(' (Mid-pos + 2mm setup)', '+2mm'),
+                      linewidth=1.8, markersize=5, capsize=3)
+
+    ax5a.axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Target Level')
+    ax5a.set_xlabel('Superior-Inferior Motion Amplitude Az (mm)', fontsize=10)
+    ax5a.set_ylabel('Pass Rate P(CR_min >= 95%) (%)', fontsize=10)
+    ax5a.set_ylim(0, 105)
+    ax5a.set_title('(A) Pass Rate with 95% Wilson Score CIs', fontsize=10, fontweight='bold')
+    ax5a.legend(fontsize=8, loc='lower left')
+    ax5a.grid(True, linestyle=':', alpha=0.6)
+
+    for name, col, mk, ls in eval_curves:
         means = [amp_data[str(a)][name]['mean_min_cr'] for a in amps]
         ci_low = [amp_data[str(a)][name]['cr_empirical_range_95'][0] for a in amps]
         ci_high = [amp_data[str(a)][name]['cr_empirical_range_95'][1] for a in amps]
-        ax5.plot(amps, means, linestyle=ls, color=col, marker=mk, label=f"{name} (mean)", linewidth=2)
-        ax5.fill_between(amps, ci_low, ci_high, color=col, alpha=0.15)
+        ax5b.plot(amps, means, linestyle=ls, color=col, marker=mk,
+                  label=name.replace(' setup', '').replace(' (Mid-pos + 2mm setup)', '+2mm'), linewidth=1.8, markersize=5)
+        ax5b.fill_between(amps, ci_low, ci_high, color=col, alpha=0.15)
 
-    ax5.axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Threshold')
-    ax5.set_xlabel('Superior-Inferior Motion Amplitude Az (mm)', fontsize=11)
-    ax5.set_ylabel('Minimum Coverage Ratio (%)', fontsize=11)
-    ax5.set_ylim(0, 105)  # UNCLIPPED AXIS
-    ax5.legend(fontsize=8, loc='lower left')
-    ax5.grid(True, linestyle=':', alpha=0.6)
+    ax5b.axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Threshold')
+    ax5b.set_xlabel('Superior-Inferior Motion Amplitude Az (mm)', fontsize=10)
+    ax5b.set_ylabel('Minimum Coverage Ratio (%)', fontsize=10)
+    ax5b.set_ylim(0, 105)
+    ax5b.set_title('(B) Continuous Min CR (Mean & Empirical 95% Range [P2.5, P97.5])', fontsize=10, fontweight='bold')
+    ax5b.legend(fontsize=8, loc='lower left')
+    ax5b.grid(True, linestyle=':', alpha=0.6)
 
     fig5.tight_layout()
     fig5.savefig(os.path.join(out_dir, 'fig5_robustness_amplitude.png'), dpi=200, bbox_inches='tight')
     plt.close(fig5)
-    print("  [Fig 5] Amplitude sensitivity plot saved.")
+    print("  [Fig 5] 2-panel amplitude sensitivity plot saved.")
 
-    # ── Figure 6: SBRT (3-fx, 5-fx) vs CFRT (30-fx) Setup Uncertainty Comparison ──
-    fig6, ax6s = plt.subplots(1, 2, figsize=(14, 5))
-    fig6.suptitle('Figure 6: Target Robustness Under Combined Respiration & Setup Uncertainty Across Fractionation Regimens',
+    # Figure 6: SBRT (3-fx, 5-fx) vs CFRT (30-fx) Setup Uncertainty Comparison
+    fig6, ax6s = plt.subplots(1, 2, figsize=(14, 5.2))
+    fig6.suptitle('Figure 6: Target Robustness Under Respiration & Setup Uncertainty Across Fractionation Regimens (N_pat = 200)',
                   fontsize=12, fontweight='bold')
 
     cfrt_data = results['setup_uncertainty']['cfrt_30fx']
@@ -866,25 +1012,25 @@ def generate_figures(results, out_dir):
     ]
     short_labels = [k.replace('Anisotropic (Mid-pos + 2mm setup)', 'Aniso+2mm').replace(' setup', '') for k in setup_names]
 
-    # Panel A: Boxplot for CFRT 30 fractions
     box_data = [cfrt_data[k]['raw_fraction_crs'] for k in setup_names]
     bp = ax6s[0].boxplot(box_data, tick_labels=short_labels, patch_artist=True, showmeans=True,
-                         meanprops=dict(marker='o', markerfacecolor='black', markersize=5))
+                         meanprops=dict(marker='o', markerfacecolor='black', markersize=4))
 
     colors_bp = ['#fca5a5', '#fed7aa', '#d1d5db', '#86efac', '#6ee7b7', '#34d399', '#93c5fd']
     for patch, c in zip(bp['boxes'], colors_bp):
         patch.set_facecolor(c)
 
     ax6s[0].axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Threshold')
-    ax6s[0].set_ylabel('Fraction Minimum Coverage (%)', fontsize=11)
+    ax6s[0].set_ylabel('Fraction Minimum Coverage (%)', fontsize=10)
     ax6s[0].set_ylim(0, 105)
-    ax6s[0].set_title('(A) Fraction Coverage Distributions (CFRT 30 fx, 1,500 Sessions)', fontsize=10)
+    ax6s[0].set_title('(A) Fraction Coverage Distributions (CFRT 30 fx, 6,000 Sessions)', fontsize=10, fontweight='bold')
     ax6s[0].grid(True, axis='y', linestyle=':', alpha=0.6)
+    ax6s[0].tick_params(axis='x', rotation=25, labelsize=8)
+
     for i, k in enumerate(setup_names):
         pass_rate = cfrt_data[k]['fraction_pass_rate_pct']
         ax6s[0].annotate(f'{pass_rate:.1f}%', (i + 1, 5), ha='center', fontsize=7.5, fontweight='bold')
 
-    # Panel B: Grouped bar chart comparing SBRT (3-fx, 5-fx) vs CFRT (30-fx) Patient All-Fraction Success
     sbrt3_data = results['setup_uncertainty']['sbrt_3fx']
     sbrt5_data = results['setup_uncertainty']['sbrt_5fx']
 
@@ -899,11 +1045,11 @@ def generate_figures(results, out_dir):
     ax6s[1].bar(x_idx, p_sbrt5, width, label='SBRT 5 fx (100% fractions pass)', color='#10b981')
     ax6s[1].bar(x_idx + width, p_cfrt, width, label='CFRT 30 fx (>=90% fractions pass)', color='#8b5cf6')
 
-    ax6s[1].set_ylabel('Patient Success Rate (%)', fontsize=11)
+    ax6s[1].set_ylabel('Patient Success Rate (%)', fontsize=10)
     ax6s[1].set_ylim(0, 105)
     ax6s[1].set_xticks(x_idx)
-    ax6s[1].set_xticklabels(short_labels, fontsize=8)
-    ax6s[1].set_title('(B) Patient-Level Success Rates: SBRT (3 & 5 fx) vs CFRT (30 fx)', fontsize=10)
+    ax6s[1].set_xticklabels(short_labels, rotation=25, ha='right', fontsize=8)
+    ax6s[1].set_title('(B) Patient-Level Success Rates: SBRT (3 & 5 fx) vs CFRT (30 fx)', fontsize=10, fontweight='bold')
     ax6s[1].legend(fontsize=8, loc='upper left')
     ax6s[1].grid(True, axis='y', linestyle=':', alpha=0.6)
 
@@ -915,7 +1061,7 @@ def generate_figures(results, out_dir):
 
 def run_experiment():
     print("=" * 80)
-    print("4D-CT LUNG TUMOR KINEMATICS, PTV MARGIN STRATEGIES & ROBUSTNESS PIPELINE (V3.1)")
+    print("4D-CT LUNG TUMOR KINEMATICS, PTV MARGIN STRATEGIES & ROBUSTNESS PIPELINE (V3.2)")
     print("Author: Vu Minh Anh | Institution: HUIT")
     print("=" * 80)
 
@@ -928,11 +1074,12 @@ def run_experiment():
     base_pos = (cz - 10.0, cy + 5.0, cx - 25.0)
 
     all_results = {'metadata': {
-        'version': '3.1',
+        'version': '3.2',
         'ref_phase': 6,
         'cycle_ratio': '60:40',
         'voxel_spacing_mm': [dz, dy, dx],
-        'nominal_tumor_radius_mm': 12.0
+        'nominal_tumor_radius_mm': 12.0,
+        'virtual_patients': 200
     }}
 
     # 1. Multi-Lesion Sensitivity Analysis
@@ -941,6 +1088,10 @@ def run_experiment():
     all_results['multi_radii'] = multi_radii_res
     for r_k, r_v in multi_radii_res.items():
         print(f"  Lesion {r_k}: Diameter = {r_v['diameter_mm']} mm, GTV Vol = {r_v['gtv_volume_cc']:.2f} cc, Tracking 3D MAE = {r_v['tracking_mae_3d']:.3f} mm")
+
+    # 1B. Multi-Lesion Robustness Analysis (r = 8, 12, 16 mm)
+    multi_robustness = evaluate_multi_tumor_robustness(spacing, grid_shape, base_pos, n_mc=2000, n_patients=200, seed=123)
+    all_results['multi_radii_robustness'] = multi_robustness
 
     # 2. Planning 4D-CT Acquisition (Regular Respiration)
     print("\n[PHASE 2] Generating Planning 4D-CT Phantom (Regular Respiration, Az = 12 mm)...")
@@ -985,8 +1136,10 @@ def run_experiment():
             }
 
         all_results['scenarios'][sc] = {
-            'gt_centroids': gt.tolist(),
-            'tracked_centroids': tracked.tolist(),
+            'kinematics': {
+                'p2p': {'Z': p2p_z, 'Y': p2p_y, 'X': p2p_x},
+                'max_disp_3d': disp_3d
+            },
             'tracking_error': {
                 'mae_3d': float(np.mean(err_3d)),
                 'max_3d': float(np.max(err_3d)),
@@ -994,68 +1147,57 @@ def run_experiment():
                 'mae_y': float(np.mean(np.abs(tracked[:, 1] - gt[:, 1]))),
                 'mae_x': float(np.mean(np.abs(tracked[:, 2] - gt[:, 2])))
             },
-            'kinematics': {
-                'p2p': {'X': p2p_x, 'Y': p2p_y, 'Z': p2p_z},
-                'max_disp_3d': disp_3d
-            },
             'van_herk': vh_calc,
-            'evaluated_planning_ptvs': eval_ptvs
+            'evaluated_planning_ptvs': eval_ptvs,
+            'centroids_true': gt.tolist(),
+            'centroids_tracked': tracked.tolist()
         }
+        print(f"  [{sc.upper()}] LR = {p2p_x:.2f} mm | AP = {p2p_y:.2f} mm | SI = {p2p_z:.2f} mm | Tracking MAE = {float(np.mean(err_3d)):.3f} mm")
 
-        print(f"  [{sc.upper()}] LR = {p2p_x:.2f} mm | AP = {p2p_y:.2f} mm | SI = {p2p_z:.2f} mm | Tracking MAE = {np.mean(err_3d):.3f} mm")
-
-    clean_planning = {}
+    all_results['planning_strategies'] = {}
     for k, v in planning_strats.items():
-        clean_planning[k] = {ik: iv for ik, iv in v.items() if ik != 'mask'}
-    all_results['planning_strategies'] = clean_planning
+        v_copy = {k2: v2 for k2, v2 in v.items() if k2 != 'mask'}
+        all_results['planning_strategies'][k] = v_copy
 
-    # 4. Monte Carlo Robustness Evaluation (N=5000) with Wilson Score CIs
+    # 4. Monte Carlo Robustness (N = 5,000 Unseen Cycles)
     print("\n[PHASE 4] Running Monte Carlo Robustness Simulation (N=5,000 Unseen Cycles with Wilson CIs)...")
-    mc_results = run_monte_carlo_robustness(planning_strats, rel_vox_coords, spacing, grid_shape, base_pos, n_cycles=5000)
+    mc_results = run_monte_carlo_robustness(planning_strats, rel_vox_coords, spacing, grid_shape, base_pos, n_cycles=5000, seed=42)
     all_results['monte_carlo'] = mc_results
 
-    reg_mc = mc_results['regular_unseen']
-    irr_mc = mc_results['irregular_unseen']
-    print(f"  ITV+3mm Regular Unseen : Pass Rate = {reg_mc['ITV + 3mm setup']['pct_pass_95']:.1f}% (Wilson 95% CI: {reg_mc['ITV + 3mm setup']['pct_pass_wilson_ci_95']}) | Mean Min CR = {reg_mc['ITV + 3mm setup']['mean_min_cr']:.2f}%")
-    print(f"  ITV+3mm Irregular+Drift: Pass Rate = {irr_mc['ITV + 3mm setup']['pct_pass_95']:.1f}% (Wilson 95% CI: {irr_mc['ITV + 3mm setup']['pct_pass_wilson_ci_95']}) | Mean Min CR = {irr_mc['ITV + 3mm setup']['mean_min_cr']:.2f}%")
-    print(f"  ITV+5mm Irregular+Drift: Pass Rate = {irr_mc['ITV + 5mm setup']['pct_pass_95']:.1f}% (Wilson 95% CI: {irr_mc['ITV + 5mm setup']['pct_pass_wilson_ci_95']}) | Mean Min CR = {irr_mc['ITV + 5mm setup']['mean_min_cr']:.2f}%")
+    itv3_reg = mc_results['regular_unseen']['ITV + 3mm setup']
+    itv3_irr = mc_results['irregular_unseen']['ITV + 3mm setup']
+    itv5_irr = mc_results['irregular_unseen']['ITV + 5mm setup']
+    print(f"  ITV+3mm Regular Unseen : Pass Rate = {itv3_reg['pct_pass_95']:.1f}% (Wilson 95% CI: [{itv3_reg['pct_pass_wilson_ci_95'][0]:.2f}%, {itv3_reg['pct_pass_wilson_ci_95'][1]:.2f}%]) | Mean Min CR = {itv3_reg['mean_min_cr']:.2f}%")
+    print(f"  ITV+3mm Irregular+Drift: Pass Rate = {itv3_irr['pct_pass_95']:.1f}% (Wilson 95% CI: [{itv3_irr['pct_pass_wilson_ci_95'][0]:.2f}%, {itv3_irr['pct_pass_wilson_ci_95'][1]:.2f}%]) | Mean Min CR = {itv3_irr['mean_min_cr']:.2f}%")
+    print(f"  ITV+5mm Irregular+Drift: Pass Rate = {itv5_irr['pct_pass_95']:.1f}% (Wilson 95% CI: [{itv5_irr['pct_pass_wilson_ci_95'][0]:.2f}%, {itv5_irr['pct_pass_wilson_ci_95'][1]:.2f}%]) | Mean Min CR = {itv5_irr['mean_min_cr']:.2f}%")
 
-    # 5. Multi-Regimen Setup Uncertainty (SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx)
-    print("\n[PHASE 5] Simulating Multi-Regimen Setup Uncertainty (SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx)...")
-    setup_regimens = run_multi_regimen_setup_uncertainty(planning_strats, rel_vox_coords, spacing, grid_shape, base_pos)
-    all_results['setup_uncertainty'] = setup_regimens
+    # 5. Multi-Regimen Setup Uncertainty (SBRT 3-fx, SBRT 5-fx, CFRT 30-fx across 200 virtual patients)
+    print("\n[PHASE 5] Simulating Multi-Regimen Setup Uncertainty (SBRT 3-fx, SBRT 5-fx, and CFRT 30-fx across 200 patients)...")
+    setup_res = run_multi_regimen_setup_uncertainty(planning_strats, rel_vox_coords, spacing, grid_shape, base_pos, n_patients=200, seed=42)
+    all_results['setup_uncertainty'] = setup_res
 
-    sbrt3 = setup_regimens['sbrt_3fx']
-    sbrt5 = setup_regimens['sbrt_5fx']
-    cfrt30 = setup_regimens['cfrt_30fx']
     for k in ['Isotropic 5mm', 'ITV + 3mm setup', 'ITV + 5mm setup', 'Anisotropic (Mid-pos + 2mm setup)']:
-        print(f"  {k:<32}: SBRT 3fx All-Pass = {sbrt3[k]['patient_all_fraction_success_pct']:.1f}% | SBRT 5fx All-Pass = {sbrt5[k]['patient_all_fraction_success_pct']:.1f}% | CFRT 30fx Frac-Pass = {cfrt30[k]['fraction_pass_rate_pct']:.1f}%")
+        s3 = setup_res['sbrt_3fx'][k]
+        s5 = setup_res['sbrt_5fx'][k]
+        c30 = setup_res['cfrt_30fx'][k]
+        print(f"  {k:32s}: SBRT 3fx All-Pass = {s3['patient_all_fraction_success_pct']:.1f}% [{s3['patient_all_pass_wilson_ci_95'][0]:.1f}%, {s3['patient_all_pass_wilson_ci_95'][1]:.1f}%] | SBRT 5fx All-Pass = {s5['patient_all_fraction_success_pct']:.1f}% [{s5['patient_all_pass_wilson_ci_95'][0]:.1f}%, {s5['patient_all_pass_wilson_ci_95'][1]:.1f}%] | CFRT 30fx Frac-Pass = {c30['fraction_pass_rate_pct']:.1f}%")
 
-    # 6. Save JSON Results
-    output_dirs = [
+    target_dirs = [
         "/Users/carwyn/.gemini/antigravity/scratch/lung_4dct_project",
         "/Users/carwyn/.gemini/antigravity/brain/5979dd1c-1faf-4c15-84cb-e5489afca1cd/scratch"
     ]
-    for out_d in output_dirs:
+    for out_d in target_dirs:
         os.makedirs(out_d, exist_ok=True)
-        json_path = os.path.join(out_d, "simulation_results.json")
-        with open(json_path, "w") as f:
+        json_path = os.path.join(out_d, 'simulation_results.json')
+        with open(json_path, 'w') as f:
             json.dump(all_results, f, indent=2)
 
-    # 7. Generate Figures
-    fig_dir = output_dirs[0]
-    print("\n[PHASE 6] Generating 6 Publication Figures (Unclipped 0-105% Axes)...")
-    generate_figures(all_results, fig_dir)
+    # 6. Figures
+    print("\n[PHASE 6] Generating 6 Publication Figures (Unclipped 0-105% Axes & 2-Panel Fig 5)...")
+    generate_publication_figures(all_results, "/Users/carwyn/.gemini/antigravity/scratch/lung_4dct_project")
 
-    for f_name in ['fig1_phantom.png', 'fig2_trajectory.png', 'fig3_coverage.png', 'fig4_tradeoff.png', 'fig5_robustness_amplitude.png', 'fig6_setup_uncertainty.png']:
-        src = os.path.join(fig_dir, f_name)
-        dst = os.path.join(output_dirs[1], f_name)
-        if os.path.exists(src):
-            import shutil
-            shutil.copy(src, dst)
-
-    elapsed = time.time() - t_start
-    print(f"\n[SUCCESS] Pipeline V3.1 Executed in {elapsed:.1f} seconds. All outputs generated cleanly.")
+    t_end = time.time()
+    print(f"\n[SUCCESS] Pipeline V3.2 Executed in {t_end - t_start:.1f} seconds. All outputs generated cleanly.")
 
 if __name__ == '__main__':
     run_experiment()
