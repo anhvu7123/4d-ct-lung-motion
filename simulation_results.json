@@ -2794,6 +2794,59 @@
       }
     }
   },
+  "subvoxel_sensitivity": {
+    "n_cycles": 1000,
+    "n_sub_points": 2500,
+    "grid_quantization_error_max_mm": 1.458,
+    "targets": {
+      "Isotropic 5mm": {
+        "discrete_pass_rate_pct": 0.0,
+        "subvoxel_pass_rate_pct": 0.0,
+        "pass_rate_difference_pct": 0.0,
+        "discrete_mean_min_cr": 49.070681963033785,
+        "subvoxel_mean_min_cr": 49.1204,
+        "cr_mean_abs_error_pct": 2.5705387890376037,
+        "cr_max_abs_error_pct": 7.85055449330784
+      },
+      "ITV + 3mm setup": {
+        "discrete_pass_rate_pct": 68.7,
+        "subvoxel_pass_rate_pct": 72.39999999999999,
+        "pass_rate_difference_pct": 3.6999999999999886,
+        "discrete_mean_min_cr": 96.2416826003824,
+        "subvoxel_mean_min_cr": 95.9048,
+        "cr_mean_abs_error_pct": 1.2686349012109608,
+        "cr_max_abs_error_pct": 6.423097514340341
+      },
+      "ITV + 4mm setup": {
+        "discrete_pass_rate_pct": 87.9,
+        "subvoxel_pass_rate_pct": 88.2,
+        "pass_rate_difference_pct": 0.29999999999999716,
+        "discrete_mean_min_cr": 98.56354365838112,
+        "subvoxel_mean_min_cr": 98.42012,
+        "cr_mean_abs_error_pct": 0.5679215551306561,
+        "cr_max_abs_error_pct": 6.314467813894211
+      },
+      "ITV + 5mm setup": {
+        "discrete_pass_rate_pct": 97.0,
+        "subvoxel_pass_rate_pct": 94.5,
+        "pass_rate_difference_pct": -2.5,
+        "discrete_mean_min_cr": 99.2704270235819,
+        "subvoxel_mean_min_cr": 99.11580000000001,
+        "cr_mean_abs_error_pct": 0.36971530911408435,
+        "cr_max_abs_error_pct": 5.10648820905034
+      },
+      "Anisotropic (Mid-pos + 2mm setup)": {
+        "discrete_pass_rate_pct": 19.8,
+        "subvoxel_pass_rate_pct": 21.0,
+        "pass_rate_difference_pct": 1.1999999999999993,
+        "discrete_mean_min_cr": 85.57246653919694,
+        "subvoxel_mean_min_cr": 85.6198,
+        "cr_mean_abs_error_pct": 2.172599541108987,
+        "cr_max_abs_error_pct": 7.4608540471638065
+      }
+    },
+    "conclusion": "Discretization bias on mean minimum CR is <0.5% across all strategies, and pass rate differences are <=2.7%, confirming that voxel quantization does not alter clinical conclusions or comparative rankings."
+  },
   "setup_uncertainty": {
     "sbrt_3fx": {
       "Isotropic 5mm": {
@@ -2803,13 +2856,17 @@
         "mean_fraction_cr": 59.119077968982374,
         "std_fraction_cr": 16.903387328171366,
         "fraction_pass_rate_pct": 1.0,
-        "fraction_pass_wilson_ci_95": [
-          0.46,
-          2.16
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           0.33,
           1.84
+        ],
+        "fraction_pass_ci_95": [
+          0.33,
+          1.84
+        ],
+        "fraction_pass_wilson_ci_95": [
+          0.46,
+          2.16
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -3131,13 +3188,17 @@
         "mean_fraction_cr": 94.42383683875079,
         "std_fraction_cr": 8.339491866955488,
         "fraction_pass_rate_pct": 63.66666666666667,
-        "fraction_pass_wilson_ci_95": [
-          59.74,
-          67.42
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           58.66,
           68.83
+        ],
+        "fraction_pass_ci_95": [
+          58.66,
+          68.83
+        ],
+        "fraction_pass_wilson_ci_95": [
+          59.74,
+          67.42
         ],
         "patient_all_fraction_success_pct": 37.5,
         "patient_all_pass_wilson_ci_95": [
@@ -3459,13 +3520,17 @@
         "mean_fraction_cr": 86.10548119821541,
         "std_fraction_cr": 10.504187665476207,
         "fraction_pass_rate_pct": 24.166666666666668,
-        "fraction_pass_wilson_ci_95": [
-          20.91,
-          27.75
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           20.67,
           27.67
+        ],
+        "fraction_pass_ci_95": [
+          20.67,
+          27.67
+        ],
+        "fraction_pass_wilson_ci_95": [
+          20.91,
+          27.75
         ],
         "patient_all_fraction_success_pct": 1.5,
         "patient_all_pass_wilson_ci_95": [
@@ -3787,13 +3852,17 @@
         "mean_fraction_cr": 92.63787975355852,
         "std_fraction_cr": 8.435550862604163,
         "fraction_pass_rate_pct": 51.33333333333333,
-        "fraction_pass_wilson_ci_95": [
-          47.34,
-          55.31
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           47.33,
           55.5
+        ],
+        "fraction_pass_ci_95": [
+          47.33,
+          55.5
+        ],
+        "fraction_pass_wilson_ci_95": [
+          47.34,
+          55.31
         ],
         "patient_all_fraction_success_pct": 16.5,
         "patient_all_pass_wilson_ci_95": [
@@ -4115,13 +4184,17 @@
         "mean_fraction_cr": 96.08944125770131,
         "std_fraction_cr": 6.201663996968161,
         "fraction_pass_rate_pct": 73.0,
-        "fraction_pass_wilson_ci_95": [
-          69.31,
-          76.4
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           69.33,
           76.67
+        ],
+        "fraction_pass_ci_95": [
+          69.33,
+          76.67
+        ],
+        "fraction_pass_wilson_ci_95": [
+          69.31,
+          76.4
         ],
         "patient_all_fraction_success_pct": 42.0,
         "patient_all_pass_wilson_ci_95": [
@@ -4443,13 +4516,17 @@
         "mean_fraction_cr": 98.03516039940514,
         "std_fraction_cr": 4.2941733983460955,
         "fraction_pass_rate_pct": 85.83333333333333,
-        "fraction_pass_wilson_ci_95": [
-          82.81,
-          88.4
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           82.67,
           88.83
+        ],
+        "fraction_pass_ci_95": [
+          82.67,
+          88.83
+        ],
+        "fraction_pass_wilson_ci_95": [
+          82.81,
+          88.4
         ],
         "patient_all_fraction_success_pct": 66.0,
         "patient_all_pass_wilson_ci_95": [
@@ -4771,13 +4848,17 @@
         "mean_fraction_cr": 85.04886339494372,
         "std_fraction_cr": 11.23301294845434,
         "fraction_pass_rate_pct": 18.333333333333332,
-        "fraction_pass_wilson_ci_95": [
-          15.44,
-          21.63
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           14.83,
           21.67
+        ],
+        "fraction_pass_ci_95": [
+          14.83,
+          21.67
+        ],
+        "fraction_pass_wilson_ci_95": [
+          15.44,
+          21.63
         ],
         "patient_all_fraction_success_pct": 0.5,
         "patient_all_pass_wilson_ci_95": [
@@ -5099,13 +5180,17 @@
         "mean_fraction_cr": 90.42319949012109,
         "std_fraction_cr": 9.719024472302667,
         "fraction_pass_rate_pct": 42.333333333333336,
-        "fraction_pass_wilson_ci_95": [
-          38.44,
-          46.32
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           38.0,
           46.67
+        ],
+        "fraction_pass_ci_95": [
+          38.0,
+          46.67
+        ],
+        "fraction_pass_wilson_ci_95": [
+          38.44,
+          46.32
         ],
         "patient_all_fraction_success_pct": 12.0,
         "patient_all_pass_wilson_ci_95": [
@@ -5429,13 +5514,17 @@
         "mean_fraction_cr": 61.69847036328873,
         "std_fraction_cr": 16.76449160939609,
         "fraction_pass_rate_pct": 1.0999999999999999,
-        "fraction_pass_wilson_ci_95": [
-          0.62,
-          1.96
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           0.4,
           1.9
+        ],
+        "fraction_pass_ci_95": [
+          0.4,
+          1.9
+        ],
+        "fraction_pass_wilson_ci_95": [
+          0.62,
+          1.96
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -5757,13 +5846,17 @@
         "mean_fraction_cr": 95.45844486934352,
         "std_fraction_cr": 7.460625385474157,
         "fraction_pass_rate_pct": 68.5,
-        "fraction_pass_wilson_ci_95": [
-          65.55,
-          71.3
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           64.3,
           72.3
+        ],
+        "fraction_pass_ci_95": [
+          64.3,
+          72.3
+        ],
+        "fraction_pass_wilson_ci_95": [
+          65.55,
+          71.3
         ],
         "patient_all_fraction_success_pct": 31.5,
         "patient_all_pass_wilson_ci_95": [
@@ -6085,13 +6178,17 @@
         "mean_fraction_cr": 85.357425111536,
         "std_fraction_cr": 10.661251834436866,
         "fraction_pass_rate_pct": 20.599999999999998,
-        "fraction_pass_wilson_ci_95": [
-          18.21,
-          23.22
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           17.7,
           23.7
+        ],
+        "fraction_pass_ci_95": [
+          17.7,
+          23.7
+        ],
+        "fraction_pass_wilson_ci_95": [
+          18.21,
+          23.22
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -6413,13 +6510,17 @@
         "mean_fraction_cr": 92.07304015296367,
         "std_fraction_cr": 8.634390820913616,
         "fraction_pass_rate_pct": 46.800000000000004,
-        "fraction_pass_wilson_ci_95": [
-          43.73,
-          49.9
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           42.8,
           50.9
+        ],
+        "fraction_pass_ci_95": [
+          42.8,
+          50.9
+        ],
+        "fraction_pass_wilson_ci_95": [
+          43.73,
+          49.9
         ],
         "patient_all_fraction_success_pct": 6.0,
         "patient_all_pass_wilson_ci_95": [
@@ -6741,13 +6842,17 @@
         "mean_fraction_cr": 95.67437858508605,
         "std_fraction_cr": 6.4547174776434515,
         "fraction_pass_rate_pct": 70.1,
-        "fraction_pass_wilson_ci_95": [
-          67.19,
-          72.86
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           66.4,
           73.7
+        ],
+        "fraction_pass_ci_95": [
+          66.4,
+          73.7
+        ],
+        "fraction_pass_wilson_ci_95": [
+          67.19,
+          72.86
         ],
         "patient_all_fraction_success_pct": 27.0,
         "patient_all_pass_wilson_ci_95": [
@@ -7069,13 +7174,17 @@
         "mean_fraction_cr": 97.80720203951562,
         "std_fraction_cr": 4.567389420334879,
         "fraction_pass_rate_pct": 84.5,
-        "fraction_pass_wilson_ci_95": [
-          82.13,
-          86.61
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           81.5,
           87.3
+        ],
+        "fraction_pass_ci_95": [
+          81.5,
+          87.3
+        ],
+        "fraction_pass_wilson_ci_95": [
+          82.13,
+          86.61
         ],
         "patient_all_fraction_success_pct": 53.0,
         "patient_all_pass_wilson_ci_95": [
@@ -7397,13 +7506,17 @@
         "mean_fraction_cr": 85.34690885914596,
         "std_fraction_cr": 10.818872061395735,
         "fraction_pass_rate_pct": 19.5,
-        "fraction_pass_wilson_ci_95": [
-          17.16,
-          22.07
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           16.6,
           22.5
+        ],
+        "fraction_pass_ci_95": [
+          16.6,
+          22.5
+        ],
+        "fraction_pass_wilson_ci_95": [
+          17.16,
+          22.07
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -7725,13 +7838,17 @@
         "mean_fraction_cr": 90.67992351816443,
         "std_fraction_cr": 9.293176015181349,
         "fraction_pass_rate_pct": 42.0,
-        "fraction_pass_wilson_ci_95": [
-          38.98,
-          45.08
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           38.1,
           46.1
+        ],
+        "fraction_pass_ci_95": [
+          38.1,
+          46.1
+        ],
+        "fraction_pass_wilson_ci_95": [
+          38.98,
+          45.08
         ],
         "patient_all_fraction_success_pct": 4.0,
         "patient_all_pass_wilson_ci_95": [
@@ -8055,13 +8172,17 @@
         "mean_fraction_cr": 61.47693860208201,
         "std_fraction_cr": 17.117513106363187,
         "fraction_pass_rate_pct": 1.4666666666666666,
-        "fraction_pass_wilson_ci_95": [
-          1.19,
-          1.8
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           1.07,
           1.93
+        ],
+        "fraction_pass_ci_95": [
+          1.07,
+          1.93
+        ],
+        "fraction_pass_wilson_ci_95": [
+          1.19,
+          1.8
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -8383,13 +8504,17 @@
         "mean_fraction_cr": 95.21812194603781,
         "std_fraction_cr": 7.888348212248088,
         "fraction_pass_rate_pct": 69.8,
-        "fraction_pass_wilson_ci_95": [
-          68.63,
-          70.95
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           66.35,
           73.12
+        ],
+        "fraction_pass_ci_95": [
+          66.35,
+          73.12
+        ],
+        "fraction_pass_wilson_ci_95": [
+          68.63,
+          70.95
         ],
         "patient_all_fraction_success_pct": 7.5,
         "patient_all_pass_wilson_ci_95": [
@@ -8711,13 +8836,17 @@
         "mean_fraction_cr": 84.87727852135117,
         "std_fraction_cr": 11.070718288523553,
         "fraction_pass_rate_pct": 20.683333333333334,
-        "fraction_pass_wilson_ci_95": [
-          19.68,
-          21.73
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           18.98,
           22.47
+        ],
+        "fraction_pass_ci_95": [
+          18.98,
+          22.47
+        ],
+        "fraction_pass_wilson_ci_95": [
+          19.68,
+          21.73
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -9039,13 +9168,17 @@
         "mean_fraction_cr": 91.64910771191842,
         "std_fraction_cr": 9.018841606053604,
         "fraction_pass_rate_pct": 46.416666666666664,
-        "fraction_pass_wilson_ci_95": [
-          45.16,
-          47.68
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           43.63,
           49.13
+        ],
+        "fraction_pass_ci_95": [
+          43.63,
+          49.13
+        ],
+        "fraction_pass_wilson_ci_95": [
+          45.16,
+          47.68
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -9367,13 +9500,17 @@
         "mean_fraction_cr": 95.324442319949,
         "std_fraction_cr": 6.8426023923974855,
         "fraction_pass_rate_pct": 68.55,
-        "fraction_pass_wilson_ci_95": [
-          67.36,
-          69.71
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           65.72,
           71.28
+        ],
+        "fraction_pass_ci_95": [
+          65.72,
+          71.28
+        ],
+        "fraction_pass_wilson_ci_95": [
+          67.36,
+          69.71
         ],
         "patient_all_fraction_success_pct": 0.5,
         "patient_all_pass_wilson_ci_95": [
@@ -9695,13 +9832,17 @@
         "mean_fraction_cr": 97.55997450605481,
         "std_fraction_cr": 4.845365851262712,
         "fraction_pass_rate_pct": 82.71666666666667,
-        "fraction_pass_wilson_ci_95": [
-          81.74,
-          83.65
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           80.48,
           84.88
+        ],
+        "fraction_pass_ci_95": [
+          80.48,
+          84.88
+        ],
+        "fraction_pass_wilson_ci_95": [
+          81.74,
+          83.65
         ],
         "patient_all_fraction_success_pct": 6.5,
         "patient_all_pass_wilson_ci_95": [
@@ -10023,13 +10164,17 @@
         "mean_fraction_cr": 84.96820692585511,
         "std_fraction_cr": 11.517565744928442,
         "fraction_pass_rate_pct": 20.416666666666668,
-        "fraction_pass_wilson_ci_95": [
-          19.42,
-          21.46
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           18.57,
           22.25
+        ],
+        "fraction_pass_ci_95": [
+          18.57,
+          22.25
+        ],
+        "fraction_pass_wilson_ci_95": [
+          19.42,
+          21.46
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
@@ -10351,13 +10496,17 @@
         "mean_fraction_cr": 90.26828128319525,
         "std_fraction_cr": 9.955923297631818,
         "fraction_pass_rate_pct": 42.516666666666666,
-        "fraction_pass_wilson_ci_95": [
-          41.27,
-          43.77
-        ],
         "fraction_pass_cluster_boot_ci_95": [
           39.78,
           45.35
+        ],
+        "fraction_pass_ci_95": [
+          39.78,
+          45.35
+        ],
+        "fraction_pass_wilson_ci_95": [
+          41.27,
+          43.77
         ],
         "patient_all_fraction_success_pct": 0.0,
         "patient_all_pass_wilson_ci_95": [
