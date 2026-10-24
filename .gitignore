@@ -1,4 +1,8 @@
 __pycache__/
 *.pyc
 .DS_Store
+__MACOSX/
+.venv/
+.pytest_cache/
 *.log
+*.before_repro_patch

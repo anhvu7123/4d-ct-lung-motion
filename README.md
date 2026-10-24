@@ -11,19 +11,19 @@
 
 ---
 
-## 🔬 Overview & Scientific Scope
+## 🔬 Scientific Scope
 
-This open-source in silico simulation framework models the complex interplay between 4D-CT respiratory kinematics, target margin expansion strategies (Isotropic, Internal Target Volume [ITV], and Mid-position Anisotropic), and statistical coverage robustness in lung radiation therapy.
+When irradiating mobile lung tumors, target margins are the primary defense against motion and patient setup errors. While four-dimensional computed tomography (4D-CT) provides breathing-phase datasets to construct Internal Target Volumes (ITV), standard planning assumes that motion observed during simulation remains reproducible throughout fractionated therapy.
 
-To overcome the **methodological tautology** prevalent in prior literature (evaluating target coverage exclusively on the identical 10 planning phases used to construct the ITV), this platform freezes planning target volumes from the nominal regular 4D-CT and stress-tests them across:
-1. **$N = 5,000$ independent unseen breathing cycles** (Monte Carlo with 95% Wilson Score Confidence Intervals for binomial pass rates and empirical $[P_{2.5}, P_{97.5}]$ inter-percentile ranges for Coverage Ratios).
-2. **Multi-regimen population setup uncertainties** across $N_{\text{pat}} = 200$ virtual patients ($7,600$ total treatment sessions):
+This open-source in silico platform benchmarks target margin strategies (Isotropic, ITV, and Mid-position Anisotropic) against realistic delivery challenges. Rather than evaluating margins only against the planning scan that created them, the platform freezes planning volumes and tests them across:
+1. **$N = 5,000$ independent unseen breathing cycles** featuring cycle-to-cycle amplitude variations and progressive baseline drift (reporting 95% Wilson score confidence intervals for binomial pass rates and empirical $[P_{2.5}, P_{97.5}]$ ranges for continuous coverage).
+2. **Multi-regimen setup uncertainties** across $N_{\text{pat}} = 200$ virtual patients ($7,600$ total treatment fractions):
    - **SBRT 3-fraction course** ($3 \times 18$ Gy, 600 sessions)
    - **SBRT 5-fraction course** ($5 \times 10$ Gy, 1,000 sessions)
    - **Conventional 30-fraction course** ($30 \times 2$ Gy, 6,000 sessions)  
-   incorporating independent 3D systematic ($\Sigma = 2.0$ mm, constant per patient) and random ($\sigma = 2.0$ mm, daily sampled) setup errors, directly aligned with **AAPM Task Group 324 Report 91.b (2026)** and the **van Herk margin recipe**. Fraction pass rates are evaluated using **95% Patient-Level Cluster Bootstrap** ($B = 2,000$ resamples) to account for intra-patient correlation.
-3. **Multi-lesion target coverage robustness** evaluated across small ($r = 8$ mm, 2.1 cc), nominal ($r = 12$ mm, 7.2 cc), and large ($r = 16$ mm, 17.2 cc) lesions ($N = 2,000$ cycles per lesion size; $N_{\text{pat}} = 200$ virtual patients).
-4. **Sub-voxel quantization sensitivity analysis** ($N = 1,000$ cycles) verifying that integer voxel rounding ($dz=2.0$ mm, $dy=dx=1.5$ mm; max shift $\approx 1.46$ mm) produces $< 0.5\%$ difference in mean minimum coverage ratio and $\le 3.7\%$ difference in pass rate compared to continuous Monte Carlo sub-voxel point cloud sampling ($N_{\text{sub}} = 2,500$ points), confirming full numerical stability.
+   modeling 3D systematic ($\Sigma = 2.0$ mm, fixed per patient) and random ($\sigma = 2.0$ mm, daily sampled) positioning errors aligned with **AAPM Task Group 324 Report 91.b (2026)** and the **van Herk recipe**. Clustered fraction pass rates are estimated via **95% Patient-Level Cluster Bootstrap** ($B = 2,000$ resamples).
+3. **Multi-lesion size sensitivity** across small ($r = 8$ mm, 2.1 cc), nominal ($r = 12$ mm, 7.2 cc), and large ($r = 16$ mm, 17.2 cc) tumors ($N = 2,000$ cycles per lesion size; $N_{\text{pat}} = 200$ virtual patients).
+4. **Sub-voxel quantization sensitivity analysis** ($N = 1,000$ cycles) verifying that integer voxel rounding ($dz=2.0$ mm, $dy=dx=1.5$ mm; maximum quantization shift $\approx 1.46$ mm) produces $< 0.5\%$ difference in mean minimum coverage ratio and $\le 3.7\%$ difference in pass rate compared to continuous Monte Carlo point cloud sampling ($N_{\text{sub}} = 2,500$ points), confirming full numerical stability.
 
 ---
 
@@ -34,10 +34,10 @@ To overcome the **methodological tautology** prevalent in prior literature (eval
 ├── LICENSE                     # Official MIT Open-Source License
 ├── main.py                     # Core simulation pipeline (Phases 1–6)
 ├── build_full_manuscript.py    # Synchronized DOCX, TeX, and Cover Letter generator
-├── build_publication_pdf.py    # Publication-grade PDF generator (ReportLab)
+├── build_publication_pdf.py    # Publication-grade PDF generator (ReportLab, 8-page format)
 ├── requirements.txt            # Python dependencies (numpy, scipy, matplotlib, python-docx, reportlab)
 ├── simulation_results.json     # 100% synchronized numerical database
-├── manuscript.pdf              # 6-page publication-ready PDF manuscript
+├── manuscript.pdf              # 8-page publication-ready PDF manuscript
 ├── manuscript.docx             # Microsoft Word manuscript format
 ├── manuscript.tex              # LaTeX source code
 ├── COVER_LETTER.docx           # Formal cover letter and response to reviewers
@@ -65,14 +65,14 @@ pip install -r requirements.txt
 ```bash
 python3 main.py
 ```
-This executes the 6-phase pipeline in ~39 seconds, producing `simulation_results.json` and all 6 publication-quality figures (`fig1` through `fig6`).
+Executes the full 6-phase pipeline in ~39 seconds, updating `simulation_results.json` and all 6 publication figures (`fig1` through `fig6`).
 
-### 3. Generate Manuscript & Cover Letter
+### 3. Generate Manuscript, PDF & Cover Letter
 ```bash
 python3 build_full_manuscript.py
 python3 build_publication_pdf.py
 ```
-Generates `manuscript.docx`, `manuscript.tex`, `manuscript.pdf`, and `COVER_LETTER.docx` with zero manual copy-pasting.
+Generates `manuscript.docx`, `manuscript.tex`, `manuscript.pdf`, and `COVER_LETTER.docx` with direct numerical synchronization.
 
 ---
 
@@ -98,24 +98,22 @@ Generates `manuscript.docx`, `manuscript.tex`, `manuscript.pdf`, and `COVER_LETT
 | **r = 8 mm (Small, 2.1 cc)** | ITV + 3 mm setup | 9.9 | 100.0% | 54.9% [52.7%, 57.1%] | 33.2% [29.8%, 36.5%] | 0.5% [0.1%, 2.8%] |
 | | ITV + 5 mm setup | 15.1 | 100.0% | 86.3% [84.7%, 87.7%] | 73.8% [70.4%, 77.1%] | 29.5% [23.6%, 36.2%] |
 | **r = 12 mm (Nominal, 7.2 cc)** | ITV + 3 mm setup | 22.3 | 100.0% | 67.8% [65.7%, 69.8%] | 45.8% [41.8%, 49.7%] | 6.5% [3.8%, 10.8%] |
-| | ITV + 5 mm setup | 31.0 | 100.0% | 96.3% [95.4%, 97.0%] | 84.3% [81.5%, 86.9%] | 51.0% [44.1%, 57.8%] |
-| **r = 16 mm (Large, 17.2 cc)** | ITV + 3 mm setup | 41.7 | 100.0% | 81.2% [79.5%, 82.9%] | 53.7% [50.0%, 57.3%] | 9.0% [5.8%, 13.8%] |
-| | ITV + 5 mm setup | 54.5 | 100.0% | 97.8% [97.1%, 98.4%] | 88.0% [85.7%, 90.3%] | 60.0% [53.1%, 66.5%] |
-
-> **Clinical Takeaway:** While tight ITV margins ($\le 3$ mm) and anisotropic expansions achieve normal tissue sparing on regular planning 4D-CT, they deteriorate sharply under setup uncertainty in hypofractionated SBRT (dropping from 100% to only 6.0% all-fraction success for 5-fraction courses). In concordance with AAPM TG-324 Report 91.b, an ITV setup margin of 4–5 mm is a standard baseline for free-breathing lung SBRT. However, even with ITV + 5 mm, geometric undercoverage persists (17.3% fraction failure in CFRT, 47.0% whole-course failure in SBRT 5-fx), underscoring that margins alone cannot eliminate geometric miss without daily volumetric image guidance (CBCT) and active motion management.
+| | ITV + 5 mm setup | 31.0 | 100.0% | 96.3% [95.4%, 97.1%] | 84.3% [81.8%, 86.6%] | 51.0% [44.1%, 57.9%] |
+| **r = 16 mm (Large, 17.2 cc)** | ITV + 3 mm setup | 38.0 | 100.0% | 81.2% [79.4%, 82.8%] | 53.7% [49.7%, 57.5%] | 9.0% [5.8%, 13.8%] |
+| | ITV + 5 mm setup | 49.8 | 100.0% | 97.9% [97.1%, 98.4%] | 88.0% [85.9%, 89.9%] | 60.0% [53.1%, 66.6%] |
 
 ---
 
 ## 📜 Citation & License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ```bibtex
-@article{vu2026insilico,
+@article{anh2026lung4dct,
   title={In Silico Evaluation of 4D-CT Lung Tumor Kinematics, Target Margin Strategies, and Coverage Robustness Under Respiratory Variations and Setup Uncertainties},
   author={Vu, Minh Anh},
   journal={Medical Physics / In Silico Radiation Oncology},
   year={2026},
-  url={https://github.com/anhvu7123/4d-ct-lung-motion}
+  note={Revision 3.2}
 }
 ```
