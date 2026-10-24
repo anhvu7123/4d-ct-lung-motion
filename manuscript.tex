@@ -24,7 +24,7 @@
 \end{abstract}
 
 \section{Introduction}
-Radiation therapy for non-small cell lung cancer (NSCLC) presents a critical clinical challenge \cite{keall2006}. In 2026, AAPM Task Group 324 published Report 91.b \cite{tg324}, recommending ITV setup margins of 4--5 mm. This study provides an open-source in silico platform evaluating 4D-CT kinematics, target margins, and multi-regimen setup uncertainties across 200 virtual patients.
+Radiation therapy for non-small cell lung cancer (NSCLC) presents a critical clinical challenge \cite{keall2006}. In 2026, AAPM Task Group 324 published Report 91.b \cite{tg324}, confirming that clinical ITV-to-PTV margins of 4 to 5 mm represent a commonly utilized clinical baseline for free-breathing SBRT. This study provides an open-source in silico platform evaluating 4D-CT kinematics, target margins, and multi-regimen setup uncertainties across 200 virtual patients.
 
 \section{Materials and Methods}
 \subsection{Kinematics and Reference Phase Formulation}
@@ -46,10 +46,18 @@ Normalized functions $\widetilde{f}_k(t) = \frac{k_{\text{raw}}(t) - \min(k_{\te
 \begin{equation}
 r_k(t) = r_{k,\text{ref}} - A_k \left[\widetilde{f}_k(t) - \widetilde{f}_k(6)\right]
 \end{equation}
-At $t=6$, $\widetilde{f}_k(6) - \widetilde{f}_k(6) = 0$, guaranteeing zero motion displacement at the reference phase by construction.
 
-\subsection{Statistical Inference}
-Fraction pass rates are reported with 95\% Patient-Level Cluster Bootstrap confidence intervals ($B = 2,000$ resamples of 200 patients) to account for intra-patient correlation from shared systematic shifts $\mathbf{S}_i \sim \mathcal{N}(0, \Sigma^2 \mathbf{I})$ \cite{vanherk2000}. Patient all-pass rates ($N_{\text{pat}} = 200$ independent patients) are reported with 95\% Wilson Score confidence intervals \cite{wilson1927}.
+\subsection{Target Strategies and van Herk Benchmark}
+Following ICRU 62 and AAPM TG-324 Report 91.b, the voxel union across phases defines an Internal Gross Target Volume (IGTV), termed ITV in this phantom study ($CTV \equiv GTV$).
+Practical Mid-position PTV ellipsoids are constructed using principal semi-axes:
+\begin{equation}
+R_k = R_{\text{tumor}} + \frac{A_k}{2} + M_{\text{setup}}
+\end{equation}
+Analytical van Herk margins are reported as a theoretical benchmark:
+\begin{equation}
+M_k = 2.5 \Sigma + 0.7 \sqrt{\sigma_{\text{setup}}^2 + \sigma_{\text{motion},k}^2}
+\end{equation}
+where $\sigma_{\text{motion},k} = \sqrt{\frac{1}{N}\sum_{t=1}^N (r_k(t) - \bar{r}_k)^2}$ is the sample standard deviation across the 10 phases.
 
 \section{Results}
 \begin{table*}[t]
@@ -80,11 +88,11 @@ Anisotropic + 2mm & 19.3 & -6.5\% & 99.4\% & 18.3\% [17.3, 19.4] & 0.0\% [0.0, 1
 \bibitem{seppenwoolde2002} Seppenwoolde Y, et al. \textit{Int J Radiat Oncol Biol Phys.} 2002;53(4):822--834.
 \bibitem{icru83} ICRU Report 83. \textit{J ICRU.} 2010;10(1).
 \bibitem{underberg2005} Underberg RWM, et al. \textit{Int J Radiat Oncol Biol Phys.} 2005;63(1):253--260.
-\bibitem{wolthaus2008} Wolthaus JW, et al. \textit{Med Phys.} 2008;35(9):3998--4011.
+\bibitem{wolthaus2008} Wolthaus JW, Sonke JJ, van Herk M, Belderbos JS, Rossi MM, Lebesque JV, Damen EM. \textit{Med Phys.} 2008;35(9):3998--4011.
 \bibitem{sonke2008} Sonke JJ, et al. \textit{Int J Radiat Oncol Biol Phys.} 2008;70(2):590--598.
 \bibitem{shirato2000} Shirato H, et al. \textit{Int J Radiat Oncol Biol Phys.} 2000;48(2):435--442.
 \bibitem{vedam2003} Vedam SS, et al. \textit{Phys Med Biol.} 2003;48(1):45--62.
-\bibitem{rietzel2005} Rietzel E, et al. \textit{Int J Radiat Oncol Biol Phys.} 2005;61(5):1535--1550.
+\bibitem{rietzel2005} Rietzel E, Chen GT, Choi NC, Willett CG. \textit{Int J Radiat Oncol Biol Phys.} 2005;61(5):1535--1550.
 \bibitem{engelsman2001} Engelsman M, et al. \textit{Int J Radiat Oncol Biol Phys.} 2001;50(5):1357--1365.
 \bibitem{guckenberger2009} Guckenberger M, et al. \textit{Int J Radiat Oncol Biol Phys.} 2009;74(2):581--588.
 \bibitem{bissonnette2012} Bissonnette JP, et al. \textit{Med Phys.} 2012;39(4):1946--1963.

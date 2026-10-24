@@ -933,30 +933,47 @@ def generate_publication_figures(results, out_dir):
     iso_min_crs = [plan[k]['min_coverage'] for k in iso_keys]
     ax4.plot(iso_vols, iso_min_crs, 'o--', color='#dc2626', label='Isotropic PTV (2-12 mm)', linewidth=2, markersize=7)
     for k in iso_keys:
-        ax4.annotate(k.replace('Isotropic ', ''), (plan[k]['ptv_volume_cc'] + 0.8, plan[k]['min_coverage'] - 2.5),
+        ax4.annotate(k.replace('Isotropic ', ''), (plan[k]['ptv_volume_cc'] + 0.8, plan[k]['min_coverage'] - 3.0),
                      fontsize=8, color='#dc2626')
 
     itv_keys = ['ITV + 2mm setup', 'ITV + 3mm setup', 'ITV + 4mm setup', 'ITV + 5mm setup']
     itv_vols = [plan[k]['ptv_volume_cc'] for k in itv_keys]
     itv_min_crs = [plan[k]['min_coverage'] for k in itv_keys]
     ax4.plot(itv_vols, itv_min_crs, 's-', color='#16a34a', label='ITV + Setup (2-5 mm)', linewidth=2, markersize=8)
+    
+    # Stagger ITV annotations above points to avoid collision with Anisotropic labels
+    itv_offsets = {
+        'ITV + 2mm setup': (-1.8, 102.3),
+        'ITV + 3mm setup': (0.8, 104.2),
+        'ITV + 4mm setup': (0.8, 102.3),
+        'ITV + 5mm setup': (0.8, 102.3)
+    }
     for k in itv_keys:
-        ax4.annotate(k.replace(' setup', ''), (plan[k]['ptv_volume_cc'] + 0.8, plan[k]['min_coverage'] - 1.5),
-                     fontsize=8, color='#16a34a')
+        ox, oy = itv_offsets[k]
+        ax4.annotate(k.replace(' setup', ''), (plan[k]['ptv_volume_cc'] + ox, oy),
+                     fontsize=8, fontweight='bold', color='#16a34a')
 
     aniso_keys = ['Anisotropic (Mid-pos + 2mm setup)', 'Anisotropic (Mid-pos + 3mm setup)', 'Anisotropic (Mid-pos + 4mm setup)']
     aniso_vols = [plan[k]['ptv_volume_cc'] for k in aniso_keys]
     aniso_min_crs = [plan[k]['min_coverage'] for k in aniso_keys]
     ax4.plot(aniso_vols, aniso_min_crs, '^-', color='#2563eb', label='Anisotropic Mid-pos (2-4 mm)', linewidth=2, markersize=8)
+    
+    # Stagger Anisotropic annotations below points
+    aniso_offsets = {
+        'Anisotropic (Mid-pos + 2mm setup)': (-3.0, 96.2),
+        'Anisotropic (Mid-pos + 3mm setup)': (-1.2, 97.6),
+        'Anisotropic (Mid-pos + 4mm setup)': (0.8, 97.6)
+    }
     for k in aniso_keys:
         lbl = k.replace('Anisotropic (Mid-pos + ', 'Aniso+').replace(' setup)', '')
-        ax4.annotate(lbl, (plan[k]['ptv_volume_cc'] + 0.8, plan[k]['min_coverage'] - 2.0),
-                     fontsize=8, color='#2563eb')
+        ox, oy = aniso_offsets[k]
+        ax4.annotate(lbl, (plan[k]['ptv_volume_cc'] + ox, oy),
+                     fontsize=8, fontweight='bold', color='#2563eb')
 
     ax4.axhline(y=95, color='red', linestyle=':', linewidth=1.5, label='95% Surrogate Threshold')
     ax4.set_xlabel('PTV Volume (cc)', fontsize=11)
     ax4.set_ylabel('Minimum Coverage Ratio (%)', fontsize=11)
-    ax4.set_ylim(0, 105)
+    ax4.set_ylim(0, 108)
     ax4.legend(fontsize=8, loc='lower right')
     ax4.grid(True, linestyle=':', alpha=0.6)
 

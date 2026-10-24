@@ -222,9 +222,9 @@ def generate_pdf():
         ))
         elements.append(Paragraph(
             "In 2026, the American Association of Physicists in Medicine (AAPM) Task Group 324 published Report 91.b ('The Management of Respiratory "
-            "Motion in Radiation Oncology') [2], emphasizing that clinical ITV-to-PTV margins must account for both residual respiratory irregularity "
-            "and inter-fraction setup uncertainties, typically recommending margins of 4 to 5 mm. Furthermore, many simulation studies evaluate target "
-            "coverage exclusively on the original planning dataset—an inherent methodological tautology that guarantees 100% coverage by construction. "
+            "Motion in Radiation Oncology') [2], confirming that clinical ITV-to-PTV margins of 4 to 5 mm represent a commonly utilized clinical baseline for "
+            "free-breathing SBRT to account for residual respiratory irregularity and inter-fraction setup uncertainties, while noting that margin choice must be tailored to clinical workflow. "
+            "Furthermore, many simulation studies evaluate target coverage exclusively on the original planning dataset—an inherent methodological tautology that guarantees 100% coverage by construction. "
             "Additionally, setup errors affect hypofractionated SBRT (3-5 fractions) [18, 19] much more severely than conventional fractionation (30 fractions) "
             "because day-to-day random errors cannot average out [4]. This paper establishes an open-source, reproducible in silico simulation framework "
             "evaluating 4D-CT kinematics, target margins, and multi-regimen setup uncertainties across 200 virtual patients (7,600 treatment sessions).",
@@ -257,16 +257,29 @@ def generate_pdf():
             body_style
         ))
 
-        elements.append(Paragraph("2.3 Target Strategies and Geometric Surrogate Criteria", h2_style))
+        elements.append(Paragraph("2.3 Target Strategies, Terminology, and Analytical Benchmark Recipes", h2_style))
         elements.append(Paragraph(
-            "Target strategies include: (1) Isotropic PTV (2-12 mm around T6 GTV), (2) ITV + Setup Margins (0, 2, 3, 4, 5 mm, including TG-324 4-5 mm), "
-            "and (3) Anisotropic Mid-position PTV (2, 3, 4 mm setup) [9, 10]. A study-defined geometric threshold of Coverage Ratio (CR) >= 95% was adopted as a "
-            "surrogate evaluation criterion, analogous to ICRU 83 dosimetric D95% >= 95% recommendations [7].",
+            "<b>Target Volume Terminology (ITV vs. IGTV):</b> In concordance with ICRU Report 62 and AAPM TG-324 Report 91.b [2], the voxel union "
+            "of the Gross Tumor Volume (GTV) across all 10 respiratory phases strictly defines an Internal Gross Target Volume (IGTV), "
+            "while an ITV formally incorporates an internal margin for microscopic spread (CTV = GTV + margin). In this in silico phantom "
+            "study where microscopic extension is not modeled (CTV = GTV), we follow standard literature convention and use the term ITV "
+            "(or IGTV/ITV) to describe this motion-encompassing volume.<br/>"
+            "Target expansion strategies evaluated include:<br/>"
+            "1. <b>Isotropic PTV:</b> Uniform spherical expansion around T6 GTV with margins of 2, 3, 5, 8, 10, and 12 mm.<br/>"
+            "2. <b>Internal Target Volume (ITV):</b> Voxel union across phases ITV = union_{t=0..9} GTV(t) with setup margins of 0, 2, 3, 4, 5 mm.<br/>"
+            "3. <b>Anisotropic Mid-position (Mid-pos) PTV Construction:</b> Centered at time-averaged mid-position r_mid = (1/N) sum r(t) and "
+            "expanded into an anisotropic ellipsoid with principal semi-axes R_k = R_tumor + (A_k / 2.0) + M_setup (Wolthaus et al. [9], Sonke et al. [10]). "
+            "For R_tumor = 12.0 mm, (Ax, Ay, Az) = (1.2, 3.5, 12.0) mm, and M_setup = 2 mm, this yields semi-axes (14.6, 15.75, 20.0) mm and volume 19.3 cc "
+            "(-6.3% vs 5mm baseline). Expanding by the analytical van Herk margin recipe from Table 1 yields 29.4 cc.<br/>"
+            "4. <b>Analytical van Herk Margin Benchmark:</b> Reported in Table 1 strictly as an analytical theoretical comparison under classical margin recipes [4]: "
+            "M_k = 2.5 * Sigma + 0.7 * sqrt(sigma_setup^2 + sigma_{motion,k}^2), where Sigma = sigma_setup = 2.0 mm, and sigma_{motion,k} = sqrt((1/N) sum (r_k(t) - r_bar_k)^2) "
+            "is the sample standard deviation (RMS displacement from mean) across the 10 sampled phase bins. For regular breathing, sigma_{motion,z} = 4.373 mm, "
+            "yielding M_z = 8.37 mm (~8.4 mm). This analytical benchmark is not an in silico dose calculation.",
             body_style
         ))
         elements.append(Paragraph(
             "<b>[Surrogate Disclaimer]</b> Geometric Coverage Ratio (CR >= 95%) is an overlap metric, not an absorbed physical dose calculation. "
-            "PTV volume reduction is a geometric proxy; 4D dose accumulation is required for clinical confirmation.",
+            "PTV volume reduction is a geometric surrogate for normal tissue sparing; 4D dose accumulation is required for clinical confirmation.",
             callout_style
         ))
 
@@ -276,8 +289,8 @@ def generate_pdf():
             "amplitudes Az ~ max(6.0, N(14.5, 1.5^2)) mm, Ay ~ max(1.5, N(4.2, 0.5^2)) mm, Ax ~ max(0.5, N(1.6, 0.2^2)) mm, and baseline drift "
             "delta_z ~ N(0, 1.5^2) mm, delta_y ~ N(0, 0.6^2) mm, delta_x ~ N(0, 0.3^2) mm grounded in Seppenwoolde et al. [6] and Sonke et al. [10]); "
             "(2) Multi-lesion sensitivity analysis across r = 8, 12, 16 mm with N = 2,000 cycles per size (Table 4); and (3) Population setup uncertainty "
-            "simulation across N_pat = 200 virtual patients for SBRT 3-fx (600 sessions), SBRT 5-fx (1,000 sessions), and CFRT 30-fx (6,000 sessions), "
-            "totaling 7,600 sessions (Sigma = sigma = 2.0 mm) [4].<br/>"
+            "simulation across N_pat = 200 virtual patients evaluated across three distinct clinical cohorts: SBRT 3-fx (600 sessions, seed=42), "
+            "SBRT 5-fx (1,000 sessions, seed=43), and CFRT 30-fx (6,000 sessions, seed=44), totaling 7,600 sessions (Sigma = sigma = 2.0 mm) [4].<br/>"
             "Statistical Inference: Because treatment fractions within a patient share the identical systematic shift S_i, fraction pass rates are reported "
             "with 95% Patient-Level Cluster Bootstrap confidence intervals (B = 2,000 resamples). Patient all-pass rates (200 independent patients) are reported "
             "with 95% Wilson Score confidence intervals [17]. Continuous coverage is reported with empirical 95% ranges [P2.5, P97.5].",
@@ -487,18 +500,18 @@ def generate_pdf():
         # 4. Discussion & Limitations
         elements.append(Paragraph("4. Discussion and Limitations", h1_style))
         elements.append(Paragraph(
-            "This study demonstrates that while anisotropic and tight ITV margins (<= 3 mm) offer substantial theoretical normal tissue "
-            "sparing under idealized regular breathing, they are highly vulnerable to baseline drift and setup uncertainty, particularly in hypofractionated SBRT. "
+            "This study demonstrates that while anisotropic and tight ITV margins (<= 3 mm) offer substantial theoretical PTV volume "
+            "reduction (acting as a geometric surrogate for normal tissue sparing) under idealized regular breathing, they are highly vulnerable to baseline drift and setup uncertainty, particularly in hypofractionated SBRT. "
             f"Expanding the setup margin to ITV + 5 mm restores substantial coverage robustness ({s5_itv5_all:.1f}% SBRT 5-fx all-pass, {c30_itv5_frac:.1f}% CFRT 30-fx fraction-pass), "
-            "directly supporting AAPM TG-324 Report 91.b [2]. However, even with ITV + 5 mm, geometric undercoverage persists in "
-            f"{cfrt_fail_rate:.1f}% of treatment fractions in CFRT and {sbrt5_fail_rate:.1f}% of patients in 5-fraction SBRT, "
-            "highlighting that margin expansion alone cannot replace active daily volumetric image guidance.",
+            "in concordance with AAPM TG-324 Report 91.b [2] as a commonly utilized clinical baseline. However, even with ITV + 5 mm, geometric undercoverage persists in "
+            f"{cfrt_fail_rate:.1f}% of treatment fractions in CFRT and {sbrt5_fail_rate:.1f}% of patients in 5-fraction SBRT. "
+            "We note that the clinical efficacy of daily volumetric image guidance (CBCT) in mitigating these setup shifts is discussed based on established literature rather than direct in silico modeling of imaging-based couch correction shifts.",
             body_style
         ))
         elements.append(Paragraph(
             "<b>Study Limitations:</b> (1) Rigid phantom target does not model non-rigid lung deformation [13]; (2) Coverage Ratio >= 95% is a geometric surrogate, "
             "whereas absorbed dose involves tissue density heterogeneities [5, 7]; (3) Real-world external surrogates can exhibit phase mismatch with internal motion [1, 12]; "
-            "(4) Hypofractionated radiobiology involves biological effective dose escalation [18, 19].",
+            "(4) Hypofractionated radiobiology involves biological effective dose escalation [18, 19]; (5) CBCT couch corrections were not dynamically simulated; clinical benefits of daily IGRT are discussed contextually from literature.",
             body_style
         ))
 
@@ -513,7 +526,7 @@ def generate_pdf():
         ))
         elements.append(Paragraph(
             "<b>Data and Code Availability:</b> Simulation source code is maintained at https://github.com/anhvu7123/4d-ct-lung-motion "
-            "under the MIT open-source license.",
+            "under the MIT open-source license. Random seeds (seed=42 for 3-fx SBRT, seed=43 for 5-fx SBRT, seed=44 for 30-fx CFRT) are documented for reproducibility.",
             caption_style
         ))
 
@@ -528,11 +541,11 @@ def generate_pdf():
             "6. Seppenwoolde Y, et al. Precise and real-time measurement of 3D tumor motion in lung due to breathing and heartbeat, measured during radiotherapy. Int J Radiat Oncol Biol Phys. 2002;53(4):822-834.<br/>"
             "7. International Commission on Radiation Units and Measurements. Prescribing, Recording, and Reporting Photon-Beam Intensity-Modulated Radiation Therapy (ICRU Report 83). J ICRU. 2010;10(1).<br/>"
             "8. Underberg RWM, et al. Use of maximum intensity projections (MIP) for target volume generation in 4DCT scans for lung cancer. Int J Radiat Oncol Biol Phys. 2005;63(1):253-260.<br/>"
-            "9. Wolthaus JW, et al. Reconstruction of a time-average mid-position CT scan for lung cancer patients. Med Phys. 2008;35(9):3998-4011.<br/>"
+            "9. Wolthaus JW, Sonke JJ, van Herk M, Belderbos JS, Rossi MM, Lebesque JV, Damen EM. Reconstruction of a time-averaged midposition CT scan for radiotherapy planning of lung cancer patients using deformable registration. Med Phys. 2008;35(9):3998-4011.<br/>"
             "10. Sonke JJ, et al. Frameless stereotactic body radiotherapy for lung cancer using four-dimensional cone beam CT guidance. Int J Radiat Oncol Biol Phys. 2008;70(2):590-598.<br/>"
             "11. Shirato H, et al. Four-dimensional treatment planning and fluoroscopic real-time tumor-tracking radiotherapy for moving tumor. Int J Radiat Oncol Biol Phys. 2000;48(2):435-442.<br/>"
             "12. Vedam SS, et al. Acquiring a four-dimensional computed tomography dataset using an external respiratory signal. Phys Med Biol. 2003;48(1):45-62.<br/>"
-            "13. Rietzel E, et al. Four-dimensional image-based treatment planning: 4D treatment planning. Int J Radiat Oncol Biol Phys. 2005;61(5):1535-1550.<br/>"
+            "13. Rietzel E, Chen GT, Choi NC, Willett CG. Four-dimensional image-based treatment planning: Target volume segmentation and dose calculation in the presence of respiratory motion. Int J Radiat Oncol Biol Phys. 2005;61(5):1535-1550.<br/>"
             "14. Engelsman M, et al. How much margin reduction is possible with respiratory gating? Int J Radiat Oncol Biol Phys. 2001;50(5):1357-1365.<br/>"
             "15. Guckenberger M, et al. Precision of image-guided radiotherapy (IGRT) in patient positioning and target volume definition for stereotactic body radiotherapy of lung cancer. Int J Radiat Oncol Biol Phys. 2009;74(2):581-588.<br/>"
             "16. Bissonnette JP, et al. Quality assurance for image-guided radiation therapy: report of AAPM Task Group 179. Med Phys. 2012;39(4):1946-1963.<br/>"
